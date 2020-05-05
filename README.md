@@ -10,7 +10,7 @@ The Assembler takes Hack assembly source files and converts them into a series o
 
 **VMTranslator**\
 Usage:  ```python3 -m VMTranslator [source] [OPTIONAL]-o [output]```\
-Output: \[source].asm or \[output]\
+Output: \[source].asm or \[output]
 
 The VMTranslator takes Jack virtual machine code and outputs it into Hack assembly language.
 
