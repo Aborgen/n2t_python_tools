@@ -1,0 +1,11 @@
+class Color {
+  function boolean white()
+  {
+    return false;
+  }
+
+  function boolean black()
+  {
+    return true;
+  }
+}

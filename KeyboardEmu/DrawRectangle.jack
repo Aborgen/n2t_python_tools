@@ -1,0 +1,58 @@
+class DrawRectangle {
+  function Rectangle rectangle(Point origin, int width, int height, int border, boolean color)
+  {
+    if (border > 0) {
+      do DrawRectangle.draw(origin, width, height, border, ~color);
+      let width = width-border;
+      let height = height-border;
+    }
+
+    return DrawRectangle.draw(origin, width, height, border, color);
+  }
+
+  function Rectangle square(Point origin, int n, int border, boolean color)
+  {
+    if (border > 0) {
+      do DrawRectangle.draw(origin, n, n, border, ~color);
+      let n = n-border;
+    }
+
+    return DrawRectangle.draw(origin, n, n, border, color);
+  }
+
+  function Rectangle scaledRectangle(Point origin, int height, int scale, int border, boolean color)
+  {
+    return DrawRectangle.rectangle(origin, height*scale, height, border, color);
+  }
+
+  function Rectangle horizontal3to1(Point origin, int height, int border, boolean color)
+  {
+    return DrawRectangle.scaledRectangle(origin, height, 3, border, color);
+  }
+
+  function Rectangle horizontal2to1(Point origin, int height, int border, boolean color)
+  {
+    return DrawRectangle.scaledRectangle(origin, height, 2, border, color);
+  }
+
+  function Rectangle draw(Point origin, int width, int height, int border, boolean color)
+  {
+    var Rectangle rectangle;
+    var int x1, y1, x2, y2;
+    let x1 = origin.X() - (width / 2);
+    let y1 = origin.Y() - (height / 2);
+    let x2 = origin.X() + (width / 2);
+    let y2 = origin.Y() + (height / 2);
+    do Screen.setColor(color);
+    do Screen.drawRectangle(x1, y1, x2, y2);
+    let rectangle = Rectangle.new(origin, width, height, border, color);
+    do rectangle.setVisible();
+    return rectangle;
+  }
+
+  function void redraw(Rectangle rect)
+  {
+    do DrawRectangle.rectangle(rect.Origin(), rect.OuterWidth(), rect.OuterHeight(), rect.Border(), rect.Color());
+    return;
+  }
+}

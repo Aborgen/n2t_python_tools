@@ -1,0 +1,149 @@
+function DrawRectangle.rectangle 0
+push argument 3
+push constant 0
+gt
+if-goto IF_TRUE0
+goto IF_FALSE0
+label IF_TRUE0
+push argument 0
+push argument 1
+push argument 2
+push argument 3
+push argument 4
+not
+call DrawRectangle.draw 5
+pop temp 0
+push argument 1
+push argument 3
+sub
+pop argument 1
+push argument 2
+push argument 3
+sub
+pop argument 2
+label IF_FALSE0
+push argument 0
+push argument 1
+push argument 2
+push argument 3
+push argument 4
+call DrawRectangle.draw 5
+return
+function DrawRectangle.square 0
+push argument 2
+push constant 0
+gt
+if-goto IF_TRUE0
+goto IF_FALSE0
+label IF_TRUE0
+push argument 0
+push argument 1
+push argument 1
+push argument 2
+push argument 3
+not
+call DrawRectangle.draw 5
+pop temp 0
+push argument 1
+push argument 2
+sub
+pop argument 1
+label IF_FALSE0
+push argument 0
+push argument 1
+push argument 1
+push argument 2
+push argument 3
+call DrawRectangle.draw 5
+return
+function DrawRectangle.scaledRectangle 0
+push argument 0
+push argument 1
+push argument 2
+call Math.multiply 2
+push argument 1
+push argument 3
+push argument 4
+call DrawRectangle.rectangle 5
+return
+function DrawRectangle.horizontal3to1 0
+push argument 0
+push argument 1
+push constant 3
+push argument 2
+push argument 3
+call DrawRectangle.scaledRectangle 5
+return
+function DrawRectangle.horizontal2to1 0
+push argument 0
+push argument 1
+push constant 2
+push argument 2
+push argument 3
+call DrawRectangle.scaledRectangle 5
+return
+function DrawRectangle.draw 5
+push argument 0
+call Point.X 1
+push argument 1
+push constant 2
+call Math.divide 2
+sub
+pop local 1
+push argument 0
+call Point.Y 1
+push argument 2
+push constant 2
+call Math.divide 2
+sub
+pop local 2
+push argument 0
+call Point.X 1
+push argument 1
+push constant 2
+call Math.divide 2
+add
+pop local 3
+push argument 0
+call Point.Y 1
+push argument 2
+push constant 2
+call Math.divide 2
+add
+pop local 4
+push argument 4
+call Screen.setColor 1
+pop temp 0
+push local 1
+push local 2
+push local 3
+push local 4
+call Screen.drawRectangle 4
+pop temp 0
+push argument 0
+push argument 1
+push argument 2
+push argument 3
+push argument 4
+call Rectangle.new 5
+pop local 0
+push local 0
+call Rectangle.setVisible 1
+pop temp 0
+push local 0
+return
+function DrawRectangle.redraw 0
+push argument 0
+call Rectangle.Origin 1
+push argument 0
+call Rectangle.OuterWidth 1
+push argument 0
+call Rectangle.OuterHeight 1
+push argument 0
+call Rectangle.Border 1
+push argument 0
+call Rectangle.Color 1
+call DrawRectangle.rectangle 5
+pop temp 0
+push constant 0
+return

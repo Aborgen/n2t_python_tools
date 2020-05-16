@@ -1,0 +1,124 @@
+class Rectangle
+{
+  field Point origin;
+  field int width, height, border;
+  field boolean color;
+  field boolean visible;
+
+  constructor Rectangle new(Point _origin, int _width, int _height, int _border, boolean _color)
+  {
+    let origin = _origin;
+    let width = _width;
+    let height = _height;
+    let border = Math.max(_border, 0);
+    let color = _color;
+    let visible = false;
+    return this;
+  }
+
+  method boolean Visible()
+  {
+    return visible;
+  }
+
+  // Typically only used when utilizing DrawRectangle
+  method void setVisible()
+  {
+    let visible = true;
+    return;
+  }
+
+  method int InnerWidth()
+  {
+    return width;
+  }
+
+  method int OuterWidth()
+  {
+    return width + border;
+  }
+
+  method int InnerHeight()
+  {
+    return height;
+  }
+
+  method int OuterHeight()
+  {
+    return height + border;
+  }
+
+  method int Border()
+  {
+    return border;
+  }
+
+  method boolean Color()
+  {
+    return color;
+  }
+
+  method Point Origin()
+  {
+    return origin;
+  }
+
+  method void toggleFillColor()
+  {
+    let color = ~color;
+    do DrawRectangle.redraw(this);
+    return;
+  }
+
+  method void drawOrigin()
+  {
+    var int c;
+    let c = (InnerWidth()) / 100;
+    do Screen.setColor(~color);
+    do Screen.drawCircle(origin.X(), origin.Y(), c);
+    return;
+  }
+
+  method void grow(int _width, int _height)
+  {
+    if (_width < 0 | _height < 0) {
+      return;
+    }
+
+    let width = width + _width;
+    let height = height + _height;
+    do origin.addPoint(Point.new(_width/2, _height/2));
+    if (visible) {
+      do DrawRectangle.redraw(this);
+    }
+
+    return;
+  }
+
+  method void shrink(int _width, int _height)
+  {
+    if ((_width < 0) | (_height < 0) | (width < _width) | (height < _height)) {
+      do Sys.error(1);
+      return;
+    }
+
+    let width = width - _width;
+    let height = height - _height;
+    do origin.subPoint(Point.new(_width/2, _height/2));
+    if (visible) {
+      do DrawRectangle.redraw(this);
+    }
+
+    return;
+  }
+
+  method void dispose()
+  {
+    do x1y1.dispose();
+    do x2y2.dispose();
+    do origin.dispose();
+    do Memory.deAlloc(this);
+    return;
+  }
+}
+

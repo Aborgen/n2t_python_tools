@@ -1,0 +1,31 @@
+class Main {
+  function void main() {
+    var int screenWidth, screenHeight, scale;
+    var boolean inverted;
+    var Point origin;
+    var DrawKeyboard k;
+    var KeyboardEmu kme;
+    var Rectangle body;
+
+    let screenWidth = 511;
+    let screenHeight = 255;
+    
+    let origin = Point.new(screenWidth / 2, screenHeight / 2);
+    let scale = 4;
+    let inverted = false;
+
+    let k = DrawKeyboard.new(origin, scale, inverted);
+    let kme = k.draw();
+    let body = kme.Body();
+    do kme.monitorKeyboard();
+    return;
+  }
+
+
+  function void drawBlackBackground(int width, int height)
+  {
+    do Screen.setColor(true);
+    do Screen.drawRectangle(0, 0, width, height);
+    return;
+  }
+}

@@ -1,0 +1,83 @@
+class Array2d
+{
+  field int columnCount, rowCount;
+  field Array data;
+  field int columnIndex, rowIndex;
+  
+  constructor Array2d new(int _rowCount, int _columnCount)
+  {
+    let rowCount = _rowCount;
+    let columnCount = _columnCount;
+    let data = _initData();
+    let rowIndex = 0;
+    let columnIndex = -1;
+    return this;
+  }
+
+  method int ColumnIndex()
+  {
+    return columnIndex+1;
+  }
+
+  method int RowIndex()
+  {
+    return rowIndex;
+  }
+
+  method int ColumnCount()
+  {
+    return columnCount;
+  }
+
+  method int RowCount()
+  {
+    return rowCount;
+  }
+
+  // Type Array is used, but Arrays are type agnostic.
+  method boolean push(Array element)
+  {
+    var Array row;
+    let columnIndex = columnIndex + 1;
+    let row = data[rowIndex];
+    let row[columnIndex] = element;
+    if (columnIndex = (columnCount-1)) {
+      if (rowIndex = (rowCount-1)) {
+        return false;
+      }
+
+      let rowIndex = rowIndex + 1;
+      let columnIndex = -1;
+    }
+
+    return true;
+  }
+
+  method Array get(int rowIndex, int columnIndex)
+  {
+    var Array row;
+    let row = data[rowIndex];
+    return row[columnIndex];
+  }
+
+  method Array _initData()
+  {
+    var Array data;
+    var int i;
+    let data = Array.new(rowCount);
+    let i = 0;
+    while (i < rowCount) {
+      let data[i] = Array.new(columnCount);
+      let i = i + 1;
+    }
+    
+    return data;
+  }
+
+  method void dispose()
+  {
+    do data.dispose();
+    do Memory.deAlloc(this);
+    return;
+  }
+}

@@ -1,0 +1,218 @@
+function Rectangle.new 0
+push constant 6
+call Memory.alloc 1
+pop pointer 0
+push argument 0
+pop this 0
+push argument 1
+pop this 1
+push argument 2
+pop this 2
+push argument 3
+push constant 0
+call Math.max 2
+pop this 3
+push argument 4
+pop this 4
+push constant 0
+pop this 5
+push pointer 0
+return
+function Rectangle.Visible 0
+push argument 0
+pop pointer 0
+push this 5
+return
+function Rectangle.setVisible 0
+push argument 0
+pop pointer 0
+push constant 0
+not
+pop this 5
+push constant 0
+return
+function Rectangle.InnerWidth 0
+push argument 0
+pop pointer 0
+push this 1
+return
+function Rectangle.OuterWidth 0
+push argument 0
+pop pointer 0
+push this 1
+push this 3
+add
+return
+function Rectangle.InnerHeight 0
+push argument 0
+pop pointer 0
+push this 2
+return
+function Rectangle.OuterHeight 0
+push argument 0
+pop pointer 0
+push this 2
+push this 3
+add
+return
+function Rectangle.Border 0
+push argument 0
+pop pointer 0
+push this 3
+return
+function Rectangle.Color 0
+push argument 0
+pop pointer 0
+push this 4
+return
+function Rectangle.Origin 0
+push argument 0
+pop pointer 0
+push this 0
+return
+function Rectangle.toggleFillColor 0
+push argument 0
+pop pointer 0
+push this 4
+not
+pop this 4
+push pointer 0
+call DrawRectangle.redraw 1
+pop temp 0
+push constant 0
+return
+function Rectangle.drawOrigin 1
+push argument 0
+pop pointer 0
+push pointer 0
+call Rectangle.InnerWidth 1
+push constant 100
+call Math.divide 2
+pop local 0
+push this 4
+not
+call Screen.setColor 1
+pop temp 0
+push this 0
+call Point.X 1
+push this 0
+call Point.Y 1
+push local 0
+call Screen.drawCircle 3
+pop temp 0
+push constant 0
+return
+function Rectangle.grow 0
+push argument 0
+pop pointer 0
+push argument 1
+push constant 0
+lt
+push argument 2
+or
+push constant 0
+lt
+if-goto IF_TRUE0
+goto IF_FALSE0
+label IF_TRUE0
+push constant 0
+return
+label IF_FALSE0
+push this 1
+push argument 1
+add
+pop this 1
+push this 2
+push argument 2
+add
+pop this 2
+push this 0
+push argument 1
+push constant 2
+call Math.divide 2
+push argument 2
+push constant 2
+call Math.divide 2
+call Point.new 2
+call Point.addPoint 2
+pop temp 0
+push this 5
+if-goto IF_TRUE1
+goto IF_FALSE1
+label IF_TRUE1
+push pointer 0
+call DrawRectangle.redraw 1
+pop temp 0
+label IF_FALSE1
+push constant 0
+return
+function Rectangle.shrink 0
+push argument 0
+pop pointer 0
+push argument 1
+push constant 0
+lt
+push argument 2
+push constant 0
+lt
+or
+push this 1
+push argument 1
+lt
+or
+push this 2
+push argument 2
+lt
+or
+if-goto IF_TRUE0
+goto IF_FALSE0
+label IF_TRUE0
+push constant 1
+call Sys.error 1
+pop temp 0
+push constant 0
+return
+label IF_FALSE0
+push this 1
+push argument 1
+sub
+pop this 1
+push this 2
+push argument 2
+sub
+pop this 2
+push this 0
+push argument 1
+push constant 2
+call Math.divide 2
+push argument 2
+push constant 2
+call Math.divide 2
+call Point.new 2
+call Point.subPoint 2
+pop temp 0
+push this 5
+if-goto IF_TRUE1
+goto IF_FALSE1
+label IF_TRUE1
+push pointer 0
+call DrawRectangle.redraw 1
+pop temp 0
+label IF_FALSE1
+push constant 0
+return
+function Rectangle.dispose 0
+push argument 0
+pop pointer 0
+call x1y1.dispose 0
+pop temp 0
+call x2y2.dispose 0
+pop temp 0
+push this 0
+call Point.dispose 1
+pop temp 0
+push pointer 0
+call Memory.deAlloc 1
+pop temp 0
+push constant 0
+return

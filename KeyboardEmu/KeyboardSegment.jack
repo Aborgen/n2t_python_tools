@@ -1,0 +1,266 @@
+class KeyboardSegment
+{
+  static int initialKeyPadding;
+  static int initialKeyBorder;
+  static int initialKeyN;
+
+  field int keyPadding;
+  field int keyBorder;
+  field int keyN;
+  field Point topLeft;
+  field Point keySlot;
+  field Array2d keys;
+  field Rectangle body;
+  field boolean color;
+  field boolean reachedMaximumWidth;
+  
+  constructor KeyboardSegment new(KeyboardEmu parent, int rows, int columns)
+  {
+    let initialKeyPadding = 2;
+    let initialKeyBorder = 1;
+    let initialKeyN = 3;
+
+    let keyPadding = initialKeyPadding * parent.Scale();
+    let keyBorder = initialKeyBorder * parent.Scale();
+    let keyN = initialKeyN * parent.Scale();
+    let keys = Array2d.new(rows, columns);
+
+    let topLeft = parent.TopLeftCorner();
+    let keySlot = _initKeySlot();
+    let body = _initBody(columns);
+    let color = parent.Color();
+
+    let reachedMaximumWidth = false;
+    return this;
+  }
+
+  method int Width()
+  {
+    return body.InnerWidth();
+  }
+
+  method int Height()
+  {
+    return body.InnerHeight();
+  }
+
+  method int KeySize()
+  {
+    return keyBorder + keyN;
+  }
+
+  method Rectangle Body()
+  {
+    return body;
+  }
+
+  method void toggleKey(int row, int column)
+  {
+    var Rectangle key;
+    if ((row < 0) | (column < 0) | (row > (keys.RowCount()-1)) | (column > (keys.ColumnCount()-1))) {
+      return;
+    }
+
+    let key = keys.get(row, column);
+    do key.toggleFillColor();
+    return;
+  }
+
+  method void placeTripleHorizontal()
+  {
+    var Point nextSlot;
+    var Rectangle key;
+    let nextSlot = Point.new(keySlot.X(), keySlot.Y());
+    // Not sure about this... Move keySlot over only one key length?
+    do nextSlot.addPoint(Point.new(keyN, 0));
+    let key = DrawRectangle.horizontal3to1(nextSlot, keyN, keyBorder, color);
+    do key.grow((keyPadding/2)+keyBorder, 0);
+    do _place(key);
+    do _place(key);
+    do _place(key);
+//    do placeEmpty();
+//    do placeEmpty();
+    return;
+  }
+
+  // TODO: Here. Why am I placing too many empty slots?
+  method void placeDoubleHorizontal()
+  {
+    var Point nextSlot;
+    var Rectangle key;
+    let nextSlot = Point.new(keySlot.X(), keySlot.Y());
+    do nextSlot.addPoint(Point.new(keyN/2, 0));
+    let key = DrawRectangle.horizontal2to1(nextSlot, keyN, keyBorder, color);
+    do key.grow(keyPadding/2, 0);
+    do _place(key);
+    do _place(key);
+//    do placeEmpty();
+    return;
+  }
+
+  method void placeDoubleVertical()
+  {
+    var Point nextSlot;
+    var Rectangle key;
+    let nextSlot = Point.new(keySlot.X(), keySlot.Y());
+    let key = DrawRectangle.square(nextSlot, keyN, keyBorder, color);
+    do key.grow(0, keyPadding/2);
+    do _place(key);
+    return;
+  }
+
+  method void placeSpacebar()
+  {
+    var Point nextSlot;
+    var Rectangle key;
+    var int length;
+    let nextSlot = Point.new(keySlot.X(), keySlot.Y());
+    // These numbers may look bizzare; that's because they are. A lot of trial and error was involved.
+    do nextSlot.addPoint(Point.new((keyN*4)+(keyPadding/2), 0));
+    let length = 10;
+    let key = DrawRectangle.scaledRectangle(nextSlot, keyN, length, keyBorder, color);
+    do key.grow(keyPadding, keyPadding/2);
+    do _place(key);
+    while (length > 3) {
+//      do placeEmpty();
+      do _place(key);
+      let length = length - 1;
+    }
+
+    return;
+  }
+
+  method void placeSingle()
+  {
+    var Point nextSlot;
+    var Rectangle key;
+    let nextSlot = Point.new(keySlot.X(), keySlot.Y());
+    let key = DrawRectangle.square(nextSlot, keyN, keyBorder, color);
+    do _place(key);
+   
+    return;
+  }
+
+  method void placeEmpty()
+  {
+//    var Point nextSlot;
+//    var Rectangle key;
+//    let nextSlot = Point.new(keySlot.X(), keySlot.Y());
+//    let key = DrawRectangle.square(nextSlot, keyN, keyBorder, color);
+//    do _place(key);
+//    do key.drawOrigin();
+//    return;
+    do _place(0);
+    return;
+  }
+
+  // TODO: Ensure padding works correctly at end of row and last column
+  method void _place(Rectangle key)
+  {
+    // Prepare for next key placement.
+    do keys.push(key);
+//    do _expandBoundingBox();
+    do _advanceKeySlot();
+    return;
+  }
+
+  method void _expandBoundingBox()
+  {
+      return;
+//    var int growWidth, growHeight;
+//    var int paddingWidth, paddingHeight;
+//    let paddingWidth = 0;
+//    let paddingHeight = 0;
+//    let growWidth = 0;
+//    let growHeight = 0;
+////    if (keys.ColumnIndex() = 0) {
+////      if (keys.RowIndex() = 0) {
+////        let growWidth = KeySize();
+////        let paddingWidth = keyPadding;
+////        let paddingHeight = keyPadding;
+////      }
+////      else {
+////        let growWidth = 0;
+////      }
+////
+////      let growHeight = KeySize();
+////    }
+////    else {
+////      let growWidth = KeySize();
+////      let growHeight = 0;
+////    }
+//
+//
+//    if (~(reachedMaximumWidth)) {
+//      if (keys.ColumnIndex() = 0) {
+//        let growHeight = KeySize();
+//        let paddingWidth = keyPadding;
+//        let paddingHeight = keyPadding;
+//      }
+//
+//      // In this case, we have just ticked over to the next row.
+//      if (keys.ColumnIndex() = (keys.ColumnCount()-1)) {
+//        let paddingWidth = keyPadding;
+//        let reachedMaximumWidth = true;
+//      }
+//      else {
+//        let growWidth = KeySize();
+//      }
+//
+//      do body.grow(growWidth+paddingWidth, growHeight+paddingHeight);
+//    }
+//
+//    if (keys.ColumnIndex() = (keys.ColumnCount()-1)) {
+//      let growHeight = KeySize();
+//      if (keys.RowIndex() = (keys.RowCount()-1)) {
+//        let paddingHeight = keyPadding/2;
+//      }
+//    }
+
+//    return;
+
+    
+  }
+
+  method void _advanceKeySlot()
+  {
+    var int x, y;
+    // Next row
+    if (keys.ColumnIndex() = 0 & ~(keys.RowIndex() = 0)) {
+      let x = topLeft.X() + keyPadding;
+      let y = topLeft.Y() + (keyN + (2 * keyPadding * (keys.RowIndex())));
+      do keySlot.dispose();
+      let keySlot = Point.new(x, y);
+    }
+    else {
+      do keySlot.addPoint(Point.new(KeySize(), 0));
+    }
+
+//    // Visualize next key placement
+//    do Screen.setColor(true);
+//    do Screen.drawCircle(keySlot.X(), keySlot.Y(), 2);
+    return;
+  }
+
+  method Point _initKeySlot()
+  {
+    return Point.addStatic(topLeft, keyPadding);
+  }
+
+  method Rectangle _initBody(int columns)
+  {
+    var int width, x;
+    let width = (KeySize() * columns);
+    let x = topLeft.X() + (width / 2);
+    return Rectangle.new(Point.new(x, topLeft.Y()), width, 0, 0, true);
+  }
+
+  method void dispose()
+  {
+    do origin.dispose();
+    do keys.dispose();
+    do body.dispose();
+    do Memory.deAlloc(this);
+    return;
+  }
+}
