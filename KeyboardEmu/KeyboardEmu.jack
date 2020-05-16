@@ -1,0 +1,189 @@
+class KeyboardEmu
+{
+  static int keyRows;
+
+  field Rectangle body;
+  field KeyboardSegment main, arrows, keypad;
+  field int scale;
+
+  constructor KeyboardEmu new(Rectangle _body, int _scale)
+  {
+    let keyRows = 6;
+
+    let body = _body;
+    let scale = _scale;
+    do _initMainSegment();
+    return this;
+  }
+
+  method boolean Color()
+  {
+    return body.Color();
+  }
+
+  method int Scale()
+  {
+    return scale;
+  }
+
+  method Point TopLeftCorner()
+  {
+    var Point borigin, offset;
+    let borigin = body.Origin();
+    let offset = Point.new(body.InnerWidth()/2, body.InnerHeight()/2);
+    return Point.subPointStatic(Point.new(borigin.X(), borigin.Y()), offset);
+  }
+
+  method int InnerWidth()
+  {
+    return body.InnerWidth();
+  }
+
+  method int OuterWidth()
+  {
+    return body.OuterWidth();
+  }
+
+  method int InnerHeight()
+  {
+    return body.InnerHeight();
+  }
+
+  method int OuterHeight()
+  {
+    return body.OuterHeight();
+  }
+
+  method Point Origin()
+  {
+    return body.Origin();
+  }
+
+  method Rectangle Body()
+  {
+    return body;
+  }
+
+  method void monitorKeyboard()
+  {
+    var char key, previousKey;
+    let key = 0;
+    while (true) {
+      while (key = 0) {
+        let key = Keyboard.keyPressed();
+      }
+
+      do toggleKey(key);
+      let previousKey = key;
+      while (~(key = 0)) {
+        let key = Keyboard.keyPressed();
+      }
+
+      do toggleKey(previousKey);
+    }
+
+    return;
+  }
+
+  // TODO: Here. Proof of concept: Probably will want to place keys in Array2d to correlate with ASCII codes.
+  method void toggleKey(char keyCode)
+  {
+    // Main Segment
+    if ((keyCode > 31) | (keyCode < 127)) {
+      if (keyCode = 32) {
+        do main.toggleKey(5, 4);
+      }
+
+      if ((keyCode = 33) | (keyCode = 49)) {
+        if (keyCode = 33) {
+          do main.toggleKey(4, 13);
+        }
+
+        do main.toggleKey(1, 1);
+      }
+
+      if ((keyCode = 34) | (keyCode = 39)) {
+        if (keyCode = 34) {
+          do main.toggleKey(4, 13);
+        }
+
+        do main.toggleKey(3, 12);
+      }
+
+      return;
+    }
+    //Function row
+    if ((keyCode > 139) | (keyCode < 153)) {
+      return;
+    }
+    // Arrow Segment
+    if ((keyCode > 129) | (keyCode < 134)) {
+      return;
+    }
+
+    return;
+  }
+
+  method void _initMainSegment()
+  {
+    var Rectangle foo;
+
+
+    var boolean keyPlaced;
+    var int x, y, keyNumber, n, i;
+    let keyNumber = 16;
+    let main = KeyboardSegment.new(this, keyRows, keyNumber);
+    // Number of keys
+    let n = keyRows * keyNumber;
+    let i = 0;
+    while (i < n) {
+      let keyPlaced = false;
+      // Shift, Enter, Backspace
+      if ((i = 29) | (i = 61) | (i = 64) | (i = 77)) {
+        do main.placeTripleHorizontal();
+        let keyPlaced = true;
+        let i = i + 2;
+      }
+      // Tab, |, Caps Lock, Ctrl L, Ctrl R
+      if (~keyPlaced) {
+        if ((i = 32) | (i = 46) | (i = 48) | (i = 80) | (i = 94)) {
+          do main.placeDoubleHorizontal();
+          let keyPlaced = true;
+          let i = i + 1;
+        }
+      }
+      // Super L, Alt L, Alt R, Super R
+      if (~keyPlaced) {
+        if ((i = 82) | (i = 83) | (i = 92) | (i = 93)) {
+          do main.placeDoubleVertical();
+          let keyPlaced = true;
+        }
+      }
+      // Spacebar
+      if (~keyPlaced) {
+        if (i = 84) {
+//          do Sys.error(1);
+          do main.placeSpacebar();
+          let keyPlaced = true;
+          let i = i + 7;
+        }
+      }
+
+      if (~keyPlaced) {
+        do main.placeSingle();
+      }
+
+      // Place typical spaces between groups on the function row
+      if ((i = 0) | (i = 5) | (i = 10)) {
+        do main.placeEmpty();
+        let i = i + 1;
+      }
+
+      let i = i + 1;
+    }
+
+//    let foo = main.Body();
+//    do DrawRectangle.redraw(foo);
+    return;
+  }
+}

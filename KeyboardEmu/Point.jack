@@ -1,0 +1,86 @@
+class Point {
+  field int x, y;
+  constructor Point new(int _x, int _y) {
+    let x = _x;
+    let y = _y;
+    return this;
+  }
+
+  method int X() {
+    return x;
+  }
+
+  method int Y() {
+    return y;
+  }
+
+  method void subPoint(Point point)
+  {
+    let x = x - point.X();
+    let y = y - point.Y();
+    return;
+  }
+
+  method void sub(int n)
+  {
+    let x = x - n;
+    let y = y - n;
+    return;
+  }
+
+  method void addPoint(Point point)
+  {
+    let x = x + point.X();
+    let y = y + point.Y();
+    return;
+  }
+
+  method void add(int n)
+  {
+    let x = x + n;
+    let y = y + n;
+    return;
+  }
+
+  function Point addPointStatic(Point lhs, Point rhs)
+  {
+    var int x1, y1, x2, y2;
+    let x1 = lhs.X();
+    let y1 = lhs.Y();
+    let x2 = rhs.X();
+    let y2 = rhs.Y();
+    return Point.new(x1+x2, y1+y2);
+  }
+
+  function Point addStatic(Point lhs, int n)
+  {
+    var int x, y;
+    let x = lhs.X();
+    let y = lhs.Y();
+    return Point.new(x+n, y+n);
+  }
+
+  function Point subPointStatic(Point lhs, Point rhs)
+  {
+    var int x1, y1, x2, y2;
+    let x1 = lhs.X();
+    let y1 = lhs.Y();
+    let x2 = rhs.X();
+    let y2 = rhs.Y();
+    return Point.new(x1-x2, y1-y2);
+  }
+
+  function Point subStatic(Point lhs, int n)
+  {
+    var int x, y;
+    let x = lhs.X();
+    let y = lhs.Y();
+    return Point.new(x-n, y-n);
+  }
+
+  method void dispose()
+  {
+    do Memory.deAlloc(this);
+    return;
+  }
+}

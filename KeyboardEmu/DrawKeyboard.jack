@@ -1,0 +1,54 @@
+class DrawKeyboard {
+  static int border;
+  static int height;
+
+  field Point origin;
+  field int scale;
+  field boolean fillColor;
+
+  constructor DrawKeyboard new(Point _origin, int _scale, boolean inverted) {
+    let border = 6;
+    let height = 32;
+
+    let origin = _origin;
+    let scale = _scale;
+
+    if (inverted) {
+      let fillColor = Color.black();
+    }
+    else {
+      let fillColor = Color.white();
+    }
+
+    return this;
+  }
+
+  method KeyboardEmu draw() {
+    var Rectangle body;
+    var KeyboardEmu kbe;
+    var Array2d arr;
+
+    let body = DrawRectangle.horizontal3to1(origin, height*scale, border*scale, fillColor);
+    let kbe = KeyboardEmu.new(body, scale);
+    do dispose();
+    return kbe;
+  }
+
+  /*
+  method void _drawKeys() {
+    var i;
+    let i = 0;
+    while (i < DrawKeyboard.keyRows) {
+      do drawKeyRow(i);
+    }
+    return;
+  }
+  */
+
+  method void dispose()
+  {
+    do origin.dispose();
+    do Memory.deAlloc(this);
+    return;
+  }
+}

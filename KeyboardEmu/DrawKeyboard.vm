@@ -1,0 +1,58 @@
+function DrawKeyboard.new 0
+push constant 3
+call Memory.alloc 1
+pop pointer 0
+push constant 6
+pop static 0
+push constant 32
+pop static 1
+push argument 0
+pop this 0
+push argument 1
+pop this 1
+push argument 2
+if-goto IF_TRUE0
+goto IF_FALSE0
+label IF_TRUE0
+call Color.black 0
+pop this 2
+goto IF_END0
+label IF_FALSE0
+call Color.white 0
+pop this 2
+label IF_END0
+push pointer 0
+return
+function DrawKeyboard.draw 3
+push argument 0
+pop pointer 0
+push this 0
+push static 1
+push this 1
+call Math.multiply 2
+push static 0
+push this 1
+call Math.multiply 2
+push this 2
+call DrawRectangle.horizontal3to1 4
+pop local 0
+push local 0
+push this 1
+call KeyboardEmu.new 2
+pop local 1
+push pointer 0
+call DrawKeyboard.dispose 1
+pop temp 0
+push local 1
+return
+function DrawKeyboard.dispose 0
+push argument 0
+pop pointer 0
+push this 0
+call Point.dispose 1
+pop temp 0
+push pointer 0
+call Memory.deAlloc 1
+pop temp 0
+push constant 0
+return
