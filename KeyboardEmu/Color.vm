@@ -1,7 +1,0 @@
-function Color.white 0
-push constant 0
-return
-function Color.black 0
-push constant 0
-not
-return
