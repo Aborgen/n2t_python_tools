@@ -28,6 +28,30 @@ class Rectangle
     return;
   }
 
+  method void scaleUp(int scale)
+  {
+    if ((scale = 0) | (scale < 0)) {
+      return;
+    }
+
+    let width = width * scale;
+    let height = height * scale;
+    do DrawRectangle.redraw(this);
+    return;
+  }
+
+  method void scaleDown(int scale)
+  {
+    if ((scale = 0) | (scale < 0)) {
+      return;
+    }
+
+    let width = width / scale;
+    let height = height / scale;
+    do DrawRectangle.redraw(this);
+    return;
+  }
+
   method int InnerWidth()
   {
     return width;
@@ -95,27 +119,8 @@ class Rectangle
     return;
   }
 
-  method void shrink(int _width, int _height)
-  {
-    if ((_width < 0) | (_height < 0) | (width < _width) | (height < _height)) {
-      do Sys.error(1);
-      return;
-    }
-
-    let width = width - _width;
-    let height = height - _height;
-    do origin.subPoint(Point.new(_width/2, _height/2));
-    if (visible) {
-      do DrawRectangle.redraw(this);
-    }
-
-    return;
-  }
-
   method void dispose()
   {
-    do x1y1.dispose();
-    do x2y2.dispose();
     do origin.dispose();
     do Memory.deAlloc(this);
     return;
