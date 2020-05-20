@@ -13,6 +13,9 @@ class Main {
     let origin = Point.new(screenWidth / 2, screenHeight / 2);
     let scale = 4;
     let inverted = false;
+    if (inverted) {
+      do Main.drawBlackBackground(screenWidth, screenHeight);
+    }
 
     let k = DrawKeyboard.new(origin, scale, inverted);
     let kme = k.draw();
