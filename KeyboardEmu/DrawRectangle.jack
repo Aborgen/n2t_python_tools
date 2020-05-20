@@ -1,6 +1,9 @@
 class DrawRectangle {
-  function Rectangle rectangle(Point origin, int width, int height, int border, boolean color)
+  function Rectangle rectangle(Point origin, int _width, int _height, int border, boolean color)
   {
+    var int width, height;
+    let width = _width;
+    let height = _height;
     if (border > 0) {
       do DrawRectangle.draw(origin, width, height, border, ~color);
       let width = width-border;
@@ -10,8 +13,10 @@ class DrawRectangle {
     return DrawRectangle.draw(origin, width, height, border, color);
   }
 
-  function Rectangle square(Point origin, int n, int border, boolean color)
+  function Rectangle square(Point origin, int _n, int border, boolean color)
   {
+    var int n;
+    let n = _n;
     if (border > 0) {
       do DrawRectangle.draw(origin, n, n, border, ~color);
       let n = n-border;
@@ -52,7 +57,12 @@ class DrawRectangle {
 
   function void redraw(Rectangle rect)
   {
-    do DrawRectangle.rectangle(rect.Origin(), rect.OuterWidth(), rect.OuterHeight(), rect.Border(), rect.Color());
+    var Point copyOrigin, origin;
+    var Rectangle nRect;
+    let origin = rect.Origin();
+    let copyOrigin = Point.new(origin.X(), origin.Y());
+    let nRect = DrawRectangle.rectangle(copyOrigin, rect.OuterWidth(), rect.OuterHeight(), rect.Border(), rect.Color());
+    do nRect.dispose();
     return;
   }
 }

@@ -3,13 +3,17 @@ class KeyboardSegment
   static int initialKeyPadding;
   static int initialKeyBorder;
   static int initialKeyN;
+  static int FIRST_KEYCODE;
+  static int LAST_KEYCODE;
+  static int NON_FUNCTIONAL_KEYS;
 
   field int keyPadding;
   field int keyBorder;
   field int keyN;
   field Point topLeft;
   field Point keySlot;
-  field Array2d keys;
+  field Array keys;
+  field int rowCount, columnCount, rowIndex, columnIndex;
   field Rectangle body;
   field boolean color;
   field boolean reachedMaximumWidth;
@@ -19,18 +23,26 @@ class KeyboardSegment
     let initialKeyPadding = 2;
     let initialKeyBorder = 1;
     let initialKeyN = 3;
+    let FIRST_KEYCODE = 32;
+    let LAST_KEYCODE = 152;
+    let NON_FUNCTIONAL_KEYS = 10;
 
     let keyPadding = initialKeyPadding * parent.Scale();
     let keyBorder = initialKeyBorder * parent.Scale();
     let keyN = initialKeyN * parent.Scale();
-    let keys = Array2d.new(rows, columns);
+    // Keys are stored with their index being their ASCII keycode - 32 (space bar, the first keycode we're
+    // concerned with). This is to ensure that lookup time is constant. The array must be able to hold more
+    // than that, however, as we have a number of keys that do not have a keycode that we need to keep track of.
+    let keys = Array.new(LAST_KEYCODE-FIRST_KEYCODE+NON_FUNCTIONAL_KEYS+1);
+    let rowCount = rows;
+    let columnCount = columns;
+    let rowIndex = 0;
+    let columnIndex = 0;
 
     let topLeft = parent.TopLeftCorner();
     let keySlot = _initKeySlot();
     let body = _initBody(columns);
     let color = parent.Color();
-
-    let reachedMaximumWidth = false;
     return this;
   }
 
@@ -54,191 +66,249 @@ class KeyboardSegment
     return body;
   }
 
-  method void toggleKey(int row, int column)
-  {
+  method void scaleUp(int scale) {
     var Rectangle key;
-    if ((row < 0) | (column < 0) | (row > (keys.RowCount()-1)) | (column > (keys.ColumnCount()-1))) {
-      return;
+    var int i, n;
+    do body.scaleUp(scale);
+    let i = 0;
+    let n = LAST_KEYCODE - FIRST_KEYCODE + NON_FUNCTIONAL_KEYS + 1;
+    while (i < n) {
+      let key = keys[i];
+      if (~(key = 0)) {
+        do key.scaleUp(scale);
+      }
+
+      let i = i + 1;
     }
 
-    let key = keys.get(row, column);
+    return;
+  }
+
+  method void scaleDown(int scale) {
+    var Rectangle key;
+    var int i, n;
+    do body.scaleDown(scale);
+    let i = 0;
+    let n = LAST_KEYCODE - FIRST_KEYCODE + NON_FUNCTIONAL_KEYS + 1;
+    while (i < n) {
+      let key = keys[i];
+      if (~(key = 0)) {
+        do key.scaleDown(scale);
+      }
+
+      let i = i + 1;
+    }
+
+    return;
+  }
+
+  method void toggleKey(int keyCode)
+  {
+    var int idx;
+    var Rectangle key, shift;
+    var boolean shiftEnabled;
+    let shiftEnabled = true;
+    
+    // This tower of if statements is used to determine whether the shift key should be toggled
+    if (keyCode = 33) {
+      let idx = 49;
+    }
+    else {if (keyCode = 34) {
+      let idx = 39;
+    }
+    else {if ((keyCode > 34) & (keyCode < 38))  {
+      let idx = keyCode + 16;
+    }
+    else {if (keyCode = 38) {
+      let idx = 55;
+    }
+    else {if (keyCode = 40) {
+      let idx = 57;
+    }
+    else {if (keyCode = 41) {
+      let idx = 48;
+    }
+    else {if (keyCode = 42) {
+      let idx = 56;
+    }
+    else {if (keyCode = 43) {
+      let idx = 61;
+    }
+    else {if (keyCode = 58) {
+      let idx = 59;
+    }
+    else {if ((keyCode = 60) | (keyCode = 62) | (keyCode = 63)) {
+      let idx = keyCode - 16;
+    }
+    else {if (keyCode = 64) {
+      let idx = 50;
+    }
+    else {if (keyCode = 94) {
+      let idx = 54;
+    }
+    else {if (keyCode = 95) {
+      let idx = 45;
+    }
+    else {if ((keyCode > 122) & (keyCode < 126)) {
+      let idx = keyCode - 32;
+    }
+    else {if (keyCode = 126) {
+      let idx = 96;
+    }
+    else {
+      let idx = keyCode;
+      let shiftEnabled = false;
+    }}}}}}}}}}}}}}} // Need an end curly bracket for each else block!
+
+    if (shiftEnabled) {
+      let shift = keys[124];
+      do shift.toggleFillColor();
+    }
+
+    let key = keys[idx-FIRST_KEYCODE];
     do key.toggleFillColor();
     return;
   }
 
-  method void placeTripleHorizontal()
+  method void placeTripleHorizontal(int keyCode)
   {
     var Point nextSlot;
     var Rectangle key;
+    if ((columnIndex = columnCount) & (rowIndex = (rowCount-1))) {
+      return;
+    }
+
     let nextSlot = Point.new(keySlot.X(), keySlot.Y());
-    // Not sure about this... Move keySlot over only one key length?
     do nextSlot.addPoint(Point.new(keyN, 0));
     let key = DrawRectangle.horizontal3to1(nextSlot, keyN, keyBorder, color);
     do key.grow((keyPadding/2)+keyBorder, 0);
-    do _place(key);
-    do _place(key);
-    do _place(key);
-//    do placeEmpty();
-//    do placeEmpty();
+    do _place(key, keyCode);
+    do placeEmpty();
+    do placeEmpty();
     return;
   }
 
-  // TODO: Here. Why am I placing too many empty slots?
-  method void placeDoubleHorizontal()
+  method void placeDoubleHorizontal(int keyCode)
   {
     var Point nextSlot;
     var Rectangle key;
+    if ((columnIndex = columnCount) & (rowIndex = (rowCount-1))) {
+      return;
+    }
+
     let nextSlot = Point.new(keySlot.X(), keySlot.Y());
     do nextSlot.addPoint(Point.new(keyN/2, 0));
     let key = DrawRectangle.horizontal2to1(nextSlot, keyN, keyBorder, color);
     do key.grow(keyPadding/2, 0);
-    do _place(key);
-    do _place(key);
-//    do placeEmpty();
+    do _place(key, keyCode);
+    do placeEmpty();
     return;
   }
 
-  method void placeDoubleVertical()
+  method void placeDoubleVertical(int keyCode)
   {
     var Point nextSlot;
     var Rectangle key;
+    if ((columnIndex = columnCount) & (rowIndex = (rowCount-1))) {
+      return;
+    }
+
     let nextSlot = Point.new(keySlot.X(), keySlot.Y());
     let key = DrawRectangle.square(nextSlot, keyN, keyBorder, color);
     do key.grow(0, keyPadding/2);
-    do _place(key);
+    do _place(key, keyCode);
     return;
   }
 
-  method void placeSpacebar()
+  method void placeSpacebar(int keyCode)
   {
     var Point nextSlot;
     var Rectangle key;
     var int length;
+    if ((columnIndex = columnCount) & (rowIndex = (rowCount-1))) {
+      return;
+    }
+
     let nextSlot = Point.new(keySlot.X(), keySlot.Y());
-    // These numbers may look bizzare; that's because they are. A lot of trial and error was involved.
+    // These numbers may look bizzare: that's because they are. A lot of trial and error was involved.
     do nextSlot.addPoint(Point.new((keyN*4)+(keyPadding/2), 0));
     let length = 10;
     let key = DrawRectangle.scaledRectangle(nextSlot, keyN, length, keyBorder, color);
     do key.grow(keyPadding, keyPadding/2);
-    do _place(key);
+    do _place(key, keyCode);
     while (length > 3) {
-//      do placeEmpty();
-      do _place(key);
+      do placeEmpty();
       let length = length - 1;
     }
 
     return;
   }
 
-  method void placeSingle()
+  method void placeSingle(int keyCode)
   {
     var Point nextSlot;
     var Rectangle key;
+    if ((columnIndex = columnCount) & (rowIndex = (rowCount-1))) {
+      return;
+    }
     let nextSlot = Point.new(keySlot.X(), keySlot.Y());
     let key = DrawRectangle.square(nextSlot, keyN, keyBorder, color);
-    do _place(key);
-   
+    do _place(key, keyCode);
     return;
   }
 
   method void placeEmpty()
   {
-//    var Point nextSlot;
-//    var Rectangle key;
-//    let nextSlot = Point.new(keySlot.X(), keySlot.Y());
-//    let key = DrawRectangle.square(nextSlot, keyN, keyBorder, color);
-//    do _place(key);
-//    do key.drawOrigin();
-//    return;
-    do _place(0);
+    do _place(0, 0);
     return;
   }
 
-  // TODO: Ensure padding works correctly at end of row and last column
-  method void _place(Rectangle key)
+  method void _place(Rectangle key, int keyCode)
   {
-    // Prepare for next key placement.
-    do keys.push(key);
-//    do _expandBoundingBox();
+    var int idx;
+    // Ignore empty keys
+    if (~((key = 0) & (keyCode = 0))) {
+      if (keyCode < 0) {
+        // These keys are "non functional," in that Hack OS does not provide a way for us to know if they have
+        // been pressed. They still need to be stored in order to scale the keyboard.
+        let idx = (LAST_KEYCODE-FIRST_KEYCODE) - keyCode;
+      }
+      else {
+        let idx = keyCode-FIRST_KEYCODE;
+      }
+
+      let keys[idx] = key;
+    }
+
     do _advanceKeySlot();
     return;
-  }
-
-  method void _expandBoundingBox()
-  {
-      return;
-//    var int growWidth, growHeight;
-//    var int paddingWidth, paddingHeight;
-//    let paddingWidth = 0;
-//    let paddingHeight = 0;
-//    let growWidth = 0;
-//    let growHeight = 0;
-////    if (keys.ColumnIndex() = 0) {
-////      if (keys.RowIndex() = 0) {
-////        let growWidth = KeySize();
-////        let paddingWidth = keyPadding;
-////        let paddingHeight = keyPadding;
-////      }
-////      else {
-////        let growWidth = 0;
-////      }
-////
-////      let growHeight = KeySize();
-////    }
-////    else {
-////      let growWidth = KeySize();
-////      let growHeight = 0;
-////    }
-//
-//
-//    if (~(reachedMaximumWidth)) {
-//      if (keys.ColumnIndex() = 0) {
-//        let growHeight = KeySize();
-//        let paddingWidth = keyPadding;
-//        let paddingHeight = keyPadding;
-//      }
-//
-//      // In this case, we have just ticked over to the next row.
-//      if (keys.ColumnIndex() = (keys.ColumnCount()-1)) {
-//        let paddingWidth = keyPadding;
-//        let reachedMaximumWidth = true;
-//      }
-//      else {
-//        let growWidth = KeySize();
-//      }
-//
-//      do body.grow(growWidth+paddingWidth, growHeight+paddingHeight);
-//    }
-//
-//    if (keys.ColumnIndex() = (keys.ColumnCount()-1)) {
-//      let growHeight = KeySize();
-//      if (keys.RowIndex() = (keys.RowCount()-1)) {
-//        let paddingHeight = keyPadding/2;
-//      }
-//    }
-
-//    return;
-
-    
   }
 
   method void _advanceKeySlot()
   {
     var int x, y;
     // Next row
-    if (keys.ColumnIndex() = 0 & ~(keys.RowIndex() = 0)) {
+    if (columnIndex = (columnCount-1)) {
+      // No more rows
+      if (rowIndex = (rowCount-1)) {
+        return;
+      }
+
       let x = topLeft.X() + keyPadding;
-      let y = topLeft.Y() + (keyN + (2 * keyPadding * (keys.RowIndex())));
+      let y = topLeft.Y() + (keyN + (2 * keyPadding * (rowIndex + 1)));
       do keySlot.dispose();
       let keySlot = Point.new(x, y);
+      let rowIndex = rowIndex + 1;
+      let columnIndex = 0;
     }
     else {
       do keySlot.addPoint(Point.new(KeySize(), 0));
+      let columnIndex = columnIndex + 1;
     }
 
 //    // Visualize next key placement
-//    do Screen.setColor(true);
-//    do Screen.drawCircle(keySlot.X(), keySlot.Y(), 2);
+//    do Screen.setColor(~color);
+//    do Screen.drawCircle(keySlot.X(), keySlot.Y(), 1);
     return;
   }
 
