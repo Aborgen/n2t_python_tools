@@ -5,7 +5,6 @@ class Main {
     var Point origin;
     var DrawKeyboard k;
     var KeyboardEmu kme;
-    var Rectangle body;
 
     let screenWidth = 511;
     let screenHeight = 255;
@@ -19,11 +18,9 @@ class Main {
 
     let k = DrawKeyboard.new(origin, scale, inverted);
     let kme = k.draw();
-    let body = kme.Body();
     do kme.monitorKeyboard();
     return;
   }
-
 
   function void drawBlackBackground(int width, int height)
   {

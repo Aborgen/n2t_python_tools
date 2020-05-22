@@ -1,11 +1,8 @@
 class DrawRectangle {
-  function Rectangle rectangle(Point origin, int _width, int _height, int border, boolean color)
+  function Rectangle rectangle(Point origin, int width, int height, int border, boolean color)
   {
-    var int width, height;
-    let width = _width;
-    let height = _height;
     if (border > 0) {
-      do DrawRectangle.draw(origin, width, height, border, ~color);
+      do DrawRectangle.draw_visualOnly(origin, width, height, ~color);
       let width = width-border;
       let height = height-border;
     }
@@ -18,7 +15,7 @@ class DrawRectangle {
     var int n;
     let n = _n;
     if (border > 0) {
-      do DrawRectangle.draw(origin, n, n, border, ~color);
+      do DrawRectangle.draw_visualOnly(origin, n, n, ~color);
       let n = n-border;
     }
 
@@ -54,15 +51,32 @@ class DrawRectangle {
     do rectangle.setVisible();
     return rectangle;
   }
+  
+  function void draw_visualOnly(Point origin, int width, int height, boolean color)
+  {
+    var int x1, y1, x2, y2;
+    let x1 = origin.X() - (width / 2);
+    let y1 = origin.Y() - (height / 2);
+    let x2 = origin.X() + (width / 2);
+    let y2 = origin.Y() + (height / 2);
+    do Screen.setColor(color);
+    do Screen.drawRectangle(x1, y1, x2, y2);
+    return;
+  }
 
   function void redraw(Rectangle rect)
   {
-    var Point copyOrigin, origin;
-    var Rectangle nRect;
-    let origin = rect.Origin();
-    let copyOrigin = Point.new(origin.X(), origin.Y());
-    let nRect = DrawRectangle.rectangle(copyOrigin, rect.OuterWidth(), rect.OuterHeight(), rect.Border(), rect.Color());
-    do nRect.dispose();
+    if (rect.Border() > 0) {
+      do DrawRectangle.draw_visualOnly(rect.Origin(), rect.OuterWidth(), rect.OuterHeight(), ~rect.Color());
+    }
+
+    do DrawRectangle.draw_visualOnly(rect.Origin(), rect.InnerWidth(), rect.InnerHeight(), rect.Color());
+    return;
+  }
+
+  function void erase(Rectangle rect)
+  {
+    do DrawRectangle.draw_visualOnly(rect.Origin(), rect.OuterWidth(), rect.OuterHeight(), rect.Color());
     return;
   }
 }

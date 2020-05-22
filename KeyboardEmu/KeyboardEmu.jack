@@ -1,7 +1,8 @@
 class KeyboardEmu
 {
   static int keyRows;
-  static int MAX_SIZE;
+
+  static int MIN_SIZE, MAX_SIZE;
 
   field Rectangle body;
   field KeyboardSegment main;
@@ -11,7 +12,8 @@ class KeyboardEmu
   constructor KeyboardEmu new(Rectangle _body, int _scale)
   {
     let keyRows = 6;
-    let MAX_SIZE = 4;
+    let MIN_SIZE = 2;
+    let MAX_SIZE = 5;
 
     let body = _body;
     let scale = _scale;
@@ -30,43 +32,51 @@ class KeyboardEmu
     return scale;
   }
 
-  method Point TopLeftCorner()
-  {
-    var Point borigin, offset;
-    let borigin = body.Origin();
-    let offset = Point.new(body.InnerWidth()/2, body.InnerHeight()/2);
-    return Point.subPointStatic(Point.new(borigin.X(), borigin.Y()), offset);
-  }
+//  method Point TopLeftCorner()
+//  {
+//    var Point origin, offset;
+//    var int width, height;
+//    let width = body.InnerWidth() / 2;
+//    let height = body.InnerHeight() / 2;
+//    let origin = body.Origin();
+////    do body.drawOrigin();
+//    let offset = Point.new(width, height);
+//    return Point.subPointStatic(origin, offset);
+////    var Point borigin, offset;
+////    let borigin = body.Origin();
+////    let offset = Point.new(body.InnerWidth()/2, body.InnerHeight()/2);
+////    return Point.subPointStatic(Point.new(borigin.X(), borigin.Y()), offset);
+//  }
 
-  method int InnerWidth()
-  {
-    return body.InnerWidth();
-  }
-
-  method int OuterWidth()
-  {
-    return body.OuterWidth();
-  }
-
-  method int InnerHeight()
-  {
-    return body.InnerHeight();
-  }
-
-  method int OuterHeight()
-  {
-    return body.OuterHeight();
-  }
-
-  method Point Origin()
-  {
-    return body.Origin();
-  }
-
-  method Rectangle Body()
-  {
-    return body;
-  }
+//  method int InnerWidth()
+//  {
+//    return body.InnerWidth();
+//  }
+//
+//  method int OuterWidth()
+//  {
+//    return body.OuterWidth();
+//  }
+//
+//  method int InnerHeight()
+//  {
+//    return body.InnerHeight();
+//  }
+//
+//  method int OuterHeight()
+//  {
+//    return body.OuterHeight();
+//  }
+//
+//  method Point Origin()
+//  {
+//    return body.Origin();
+//  }
+//
+//  method Rectangle Body()
+//  {
+//    return body;
+//  }
 
   method void monitorKeyboard()
   {
@@ -78,17 +88,16 @@ class KeyboardEmu
         let key = Keyboard.keyPressed();
       }
 
-//      if (key = 43) {
-//        do _scaleUp();
-//      }
-//      else {if (key = 45) {
-//        do _scaleDown();
-//      }}
+      if (key = 43) {
+        do _scale(true);
+      }
+      else {if (key = 45) {
+        do _scale(false);
+      }}
 
-      do toggleKey(key);
       let previousKey = key;
+      do toggleKey(key);
       while (~(key = 0)) {
-        do Sys.wait(100);
         let key = Keyboard.keyPressed();
       }
 
@@ -106,12 +115,16 @@ class KeyboardEmu
 
   method void _initMainSegment()
   {
+    var Point originCopy;
     var boolean keyPlaced;
-    var int x, y, keyNumber, n;
+    var int keyNumber, n;
     var int i, offset;
     var int keyCode;
+
+    let originCopy = Point.copy(body.Origin());
     let keyNumber = 20;
-    let main = KeyboardSegment.new(this, keyRows, keyNumber);
+//    let main = KeyboardSegment.new(this, keyRows, keyNumber);
+    let main = KeyboardSegment.new(originCopy, body.InnerWidth(), body.InnerHeight(), scale, body.Color(), keyRows, keyNumber);
     // Number of keys
     let n = keyRows * keyNumber;
     let i = 0;
@@ -176,31 +189,33 @@ class KeyboardEmu
       let i = i + 1;
     }
 
-    do keyCodeArray.dispose();
+//    do keyCodeArray.dispose();
     return;
   }
 
-  method void _scaleUp()
+  method void _scale(boolean positive)
   {
-    if (scale = MAX_SIZE) {
-      return;
+    if (positive) {
+      if (scale = MAX_SIZE) {
+        return;
+      }
+
+      do DrawRectangle.erase(body);
+      do body.scaleUp(scale);
+      let scale = scale + 1;
+    }
+    else {
+      if (scale = MIN_SIZE) {
+        return;
+      }
+
+      do DrawRectangle.erase(body);
+      do body.scaleDown(scale);
+      let scale = scale - 1;
     }
 
-    let scale = scale + 1;
-    do body.scaleUp(scale);
-    do main.scaleUp(scale);
-    return;
-  }
-
-  method void _scaleDown()
-  {
-    if (scale = 1) {
-      return;
-    }
-
-    let scale = scale - 1;
-    do body.scaleDown(scale);
-    do main.scaleDown(scale);
+    do main.dispose();
+    do _initMainSegment();
     return;
   }
 
@@ -297,6 +312,16 @@ class KeyboardEmu
     let keyCodeArray[80] = 130;
     let keyCodeArray[81] = 133;
     let keyCodeArray[82] = 132;
+    return;
+  }
+
+  method void dispose()
+  {
+    do body.dispose();
+    do main.dispose();
+    do keys.dispose();
+    do keyCodeArray.dispose();
+    do Memory.deAlloc(this);
     return;
   }
 }
