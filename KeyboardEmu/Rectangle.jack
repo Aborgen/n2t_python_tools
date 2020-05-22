@@ -34,9 +34,13 @@ class Rectangle
       return;
     }
 
-    let width = width * scale;
-    let height = height * scale;
-    do DrawRectangle.redraw(this);
+    let width = width + (width / scale);
+    let height = height + (height / scale);
+    let border = border + (border / scale);
+    if (visible) {
+      do DrawRectangle.redraw(this);
+    }
+
     return;
   }
 
@@ -45,10 +49,14 @@ class Rectangle
     if ((scale = 0) | (scale < 0)) {
       return;
     }
+    
+    let width = width - (width / scale);
+    let height = height - (height / scale);
+    let border = border - (border / scale);
+    if (visible) {
+      do DrawRectangle.redraw(this);
+    }
 
-    let width = width / scale;
-    let height = height / scale;
-    do DrawRectangle.redraw(this);
     return;
   }
 

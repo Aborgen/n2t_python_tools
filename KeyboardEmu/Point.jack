@@ -6,6 +6,13 @@ class Point {
     return this;
   }
 
+  constructor Point copy(Point point)
+  {
+    let x = point.X() + 0;
+    let y = point.Y() + 0;
+    return this;
+  }
+
   method int X() {
     return x;
   }
@@ -13,6 +20,7 @@ class Point {
   method int Y() {
     return y;
   }
+
 
   method void subPoint(Point point)
   {
@@ -54,10 +62,14 @@ class Point {
 
   function Point addStatic(Point lhs, int n)
   {
-    var int x, y;
-    let x = lhs.X();
-    let y = lhs.Y();
-    return Point.new(x+n, y+n);
+    var Point foo;
+//    var int x, y;
+//    let x = lhs.X();
+//    let y = lhs.Y();
+    let foo = Point.copy(lhs);
+    do foo.add(n);
+//    return Point.new(x+n, y+n);
+    return foo;
   }
 
   function Point subPointStatic(Point lhs, Point rhs)

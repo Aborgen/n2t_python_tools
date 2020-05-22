@@ -6,6 +6,7 @@ class KeyboardSegment
   static int FIRST_KEYCODE;
   static int LAST_KEYCODE;
   static int NON_FUNCTIONAL_KEYS;
+  static int ARRAY_LENGTH;
 
   field int keyPadding;
   field int keyBorder;
@@ -18,7 +19,7 @@ class KeyboardSegment
   field boolean color;
   field boolean reachedMaximumWidth;
   
-  constructor KeyboardSegment new(KeyboardEmu parent, int rows, int columns)
+  constructor KeyboardSegment new(Point origin, int width, int height, int scale, boolean _color, int rows, int columns)
   {
     let initialKeyPadding = 2;
     let initialKeyBorder = 1;
@@ -26,23 +27,24 @@ class KeyboardSegment
     let FIRST_KEYCODE = 32;
     let LAST_KEYCODE = 152;
     let NON_FUNCTIONAL_KEYS = 10;
+    let ARRAY_LENGTH = (LAST_KEYCODE - FIRST_KEYCODE) + NON_FUNCTIONAL_KEYS + 1;
 
-    let keyPadding = initialKeyPadding * parent.Scale();
-    let keyBorder = initialKeyBorder * parent.Scale();
-    let keyN = initialKeyN * parent.Scale();
+    let keyPadding = initialKeyPadding * scale;
+    let keyBorder = initialKeyBorder * scale;
+    let keyN = initialKeyN * scale;
     // Keys are stored with their index being their ASCII keycode - 32 (space bar, the first keycode we're
     // concerned with). This is to ensure that lookup time is constant. The array must be able to hold more
     // than that, however, as we have a number of keys that do not have a keycode that we need to keep track of.
-    let keys = Array.new(LAST_KEYCODE-FIRST_KEYCODE+NON_FUNCTIONAL_KEYS+1);
+    let keys = Array.new(ARRAY_LENGTH);
     let rowCount = rows;
     let columnCount = columns;
     let rowIndex = 0;
     let columnIndex = 0;
 
-    let topLeft = parent.TopLeftCorner();
+    let topLeft = _initTopLeft(origin, width, height);
     let keySlot = _initKeySlot();
     let body = _initBody(columns);
-    let color = parent.Color();
+    let color = _color;
     return this;
   }
 
@@ -64,42 +66,6 @@ class KeyboardSegment
   method Rectangle Body()
   {
     return body;
-  }
-
-  method void scaleUp(int scale) {
-    var Rectangle key;
-    var int i, n;
-    do body.scaleUp(scale);
-    let i = 0;
-    let n = LAST_KEYCODE - FIRST_KEYCODE + NON_FUNCTIONAL_KEYS + 1;
-    while (i < n) {
-      let key = keys[i];
-      if (~(key = 0)) {
-        do key.scaleUp(scale);
-      }
-
-      let i = i + 1;
-    }
-
-    return;
-  }
-
-  method void scaleDown(int scale) {
-    var Rectangle key;
-    var int i, n;
-    do body.scaleDown(scale);
-    let i = 0;
-    let n = LAST_KEYCODE - FIRST_KEYCODE + NON_FUNCTIONAL_KEYS + 1;
-    while (i < n) {
-      let key = keys[i];
-      if (~(key = 0)) {
-        do key.scaleDown(scale);
-      }
-
-      let i = i + 1;
-    }
-
-    return;
   }
 
   method void toggleKey(int keyCode)
@@ -271,10 +237,10 @@ class KeyboardSegment
       if (keyCode < 0) {
         // These keys are "non functional," in that Hack OS does not provide a way for us to know if they have
         // been pressed. They still need to be stored in order to scale the keyboard.
-        let idx = (LAST_KEYCODE-FIRST_KEYCODE) - keyCode;
+        let idx = (LAST_KEYCODE - FIRST_KEYCODE) - keyCode;
       }
       else {
-        let idx = keyCode-FIRST_KEYCODE;
+        let idx = keyCode - FIRST_KEYCODE;
       }
 
       let keys[idx] = key;
@@ -312,6 +278,13 @@ class KeyboardSegment
     return;
   }
 
+  method Point _initTopLeft(Point origin, int width, int height)
+  {
+    var Point offset;
+    let offset = Point.new(width / 2, height / 2);
+    return Point.subPointStatic(origin, offset);
+
+  }
   method Point _initKeySlot()
   {
     return Point.addStatic(topLeft, keyPadding);
@@ -327,8 +300,22 @@ class KeyboardSegment
 
   method void dispose()
   {
-    do origin.dispose();
-    do keys.dispose();
+    var Rectangle key;
+    var int i;
+    do topLeft.dispose();
+    do keySlot.dispose();
+
+    let i = 0;
+    while (i < (ARRAY_LENGTH)) {
+      let key = keys[i];
+      if (~(key = 0)) {
+        do key.dispose();
+        let key = 0;
+      }
+
+      let i = i + 1;
+    }
+
     do body.dispose();
     do Memory.deAlloc(this);
     return;

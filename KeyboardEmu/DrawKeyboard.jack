@@ -11,7 +11,8 @@ class DrawKeyboard {
     let height = 32;
 
     let origin = _origin;
-    let scale = _scale;
+    // Unfortunately, I have to choose between a scale of 1 working correctly and everything above 1 working correctly.
+    let scale = _scale + 1;
 
     if (inverted) {
       let fillColor = Color.black();
