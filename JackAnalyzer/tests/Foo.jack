@@ -1,0 +1,13 @@
+class Foo {
+  field String bar;
+
+  constructor Foo new() {
+    let bar = "Hello world!";
+    return this;
+  }
+
+  method void greetings() {
+    do Output.printString(bar);
+    return;
+  }
+}
