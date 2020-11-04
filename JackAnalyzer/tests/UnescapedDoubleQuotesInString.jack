@@ -1,0 +1,13 @@
+class UnescapedDoubleQuotesInString {
+  field String bar;
+
+  constructor UnescapedDoubleQuotesInString new() {
+    let bar = "The man stepped up, and then said "step off!"";
+    return this;
+  }
+
+  method void greetings() {
+    do Output.printString(bar);
+    return;
+  }
+}

@@ -69,3 +69,40 @@ class TestTokenizerIO(unittest.TestCase):
       tokenizer.next()
 
     self.assertFalse(mock_func.called)
+
+class TestSyntax(unittest.TestCase):
+  def test_throws_if_string_constant_has_missing_end_double_quote(self):
+    tokenizer = Tokenizer('tests/MalformedString.jack')
+    line = 5
+    character = 15
+    for i in range(16):
+      tokenizer.next()
+
+    with self.assertRaisesRegex(TokenizerError, f'(L|l)ine.*{line}.*(C|c)haracter.*{character}'):
+      tokenizer.next()
+
+
+  def test_throws_if_string_constant_has_unescaped_double_quote_within(self):
+    tokenizer = Tokenizer('tests/UnescapedDoubleQuotesInString.jack')
+    line = 5
+    character = 15
+    for i in range(16):
+      tokenizer.next()
+
+    with self.assertRaisesRegex(TokenizerError, f'(L|l)ine.*{line}.*(C|c)haracter.*{character}'):
+      tokenizer.next()
+
+
+  def test_returns_tokens_until_exhausted(self):
+    expected=[Token('class','keyword',1,1),Token('CorrectSyntax','identifier',1,7),Token('{','symbol',1,21),Token('field','keyword',2,3),Token('String','identifier',2,9),Token('bar','identifier',2,16),Token(';','symbol',2,19),Token('constructor','keyword',4,3),Token('CorrectSyntax','identifier',4,15),Token('new','identifier',4,29),Token('(','symbol',4,32),Token(')','symbol',4,33),Token('{','symbol',4,35),Token('let','keyword',5,5),Token('bar','identifier',5,9),Token('=','symbol',5,13),Token('Hello world!','stringConst',5,15),Token(';','symbol',5,29),Token('return','keyword',6,5),Token('this','keyword',6,12),Token(';','symbol',6,16),Token('}','symbol',7,3),Token('method','keyword',9,3),Token('void','keyword',9,10),Token('greetings','identifier',9,15),Token('(','symbol',9,24),Token(')','symbol',9,25),Token('{','symbol',9,27),Token('do','keyword',10,5),Token('Output','identifier',10,8),Token('.','symbol',10,14),Token('printString','identifier',10,15),Token('(','symbol',10,26),Token('bar','identifier',10,27),Token(')','symbol',10,30),Token(';','symbol',10,31),Token('return','keyword',11,5),Token(';','symbol',11,11),Token('}','symbol',12,3),Token('}','symbol',13,1)]
+
+    tokenizer = Tokenizer('tests/CorrectSyntax.jack')
+    tokens = []
+    while not tokenizer.finished():
+      token = tokenizer.next()
+      if not token:
+        break
+      
+      tokens.append(token)
+
+    self.assertEqual(tokens, expected)

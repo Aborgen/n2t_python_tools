@@ -1,7 +1,7 @@
-class Foo {
+class CorrectSyntax {
   field String bar;
 
-  constructor Foo new() {
+  constructor CorrectSyntax new() {
     let bar = "Hello world!";
     return this;
   }
