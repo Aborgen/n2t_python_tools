@@ -1,9 +1,12 @@
 from pathlib import Path
-from typing import Union, List
+from typing import List
+import xml.etree.cElementTree as ET
 
-from .src.tokenizer import Tokenizer
+from .src.codeWriter import CodeWriter
+from .src.tokenizer import Token, Tokenizer
 
-def JackAnalyzer(source: Union[List[Path], Path], out_file: Path, namespace: str) -> None:
+def JackAnalyzer(source: Path, out_file: Path, export_tokens: bool = False) -> None:
+  writer = CodeWriter()
   tokenizer = Tokenizer(source)
   tokens = []
   while not tokenizer.finished():
@@ -13,4 +16,5 @@ def JackAnalyzer(source: Union[List[Path], Path], out_file: Path, namespace: str
 
     tokens.append(token)
 
-  print(tokens)
+  if export_tokens:
+    CodeWriter.export_tokens_as_xml(tokens, out_file)
