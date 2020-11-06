@@ -6,7 +6,6 @@ from .src.codeWriter import CodeWriter
 from .src.tokenizer import Token, Tokenizer
 
 def JackAnalyzer(source: Path, out_file: Path, export_tokens: bool = False) -> None:
-  writer = CodeWriter()
   tokenizer = Tokenizer(source)
   tokens = []
   while not tokenizer.finished():
@@ -17,4 +16,11 @@ def JackAnalyzer(source: Path, out_file: Path, export_tokens: bool = False) -> N
     tokens.append(token)
 
   if export_tokens:
-    CodeWriter.export_tokens_as_xml(tokens, out_file)
+    self._export_xml_tokens(tokens, out_file)
+
+  parser = Parser(tokens, source, out_file, export_tokens)
+
+
+def _export_xml_tokens(self, tokens: List[Token], out_file: Path) -> None:
+
+  CodeWriter.export_tokens_as_xml(tokens, out_file)
