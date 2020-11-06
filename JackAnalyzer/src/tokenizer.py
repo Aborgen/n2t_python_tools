@@ -11,7 +11,7 @@ from .utils import clean_string_constant
 @dataclass
 class Token():
   value     : str
-  tokenType : str
+  token_type : str
   line      : int
   word      : int
 
@@ -95,16 +95,16 @@ class Tokenizer():
 
     token = Token(word, 'temp', self._row, self._column)
     if word in keywords:
-      token.tokenType = 'keyword'
+      token.token_type = 'keyword'
     elif word in symbols:
-      token.tokenType = 'symbol'
+      token.token_type = 'symbol'
     elif is_integer_constant(word):
-      token.tokenType = 'intConst'
+      token.token_type = 'intConst'
     elif is_string_constant(word):
       token.value = clean_string_constant(word)
-      token.tokenType = 'stringConst'
+      token.token_type = 'stringConst'
     elif is_identifier(word):
-      token.tokenType = 'identifier'
+      token.token_type = 'identifier'
     else:
       cutoff = 100
       raise TokenizerError(f'Token not recognized: {word[:cutoff] + "..." if len(word) > cutoff else word}', self._row, self._column)
