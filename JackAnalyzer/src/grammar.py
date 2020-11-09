@@ -6,7 +6,7 @@ class GrammarObject():
   children  : list
 
   def deposit(self, obj: Union[Token, GrammarObject]) -> None:
-    if self._ptr > len(self._keywords):
+    if self._ptr > len(self._keywords) - 1:
       raise ParserError('Statement!', obj.line, obj.word)
 
     expected = self._expected()
