@@ -1,0 +1,2 @@
+# Allow jack files in tests directory
+!/tests/**/*.jack

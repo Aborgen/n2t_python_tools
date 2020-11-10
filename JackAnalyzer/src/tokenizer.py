@@ -1,7 +1,6 @@
 from dataclasses import dataclass
 from enum import Enum
 from typing import Generator, Optional
-from io import BufferedIOBase
 
 from .categories import keywords, symbols
 from .categories import is_integer_constant, is_string_constant, is_identifier
@@ -40,30 +39,50 @@ class Tokenizer():
     try:
       with open(self._filename, 'r') as f:
         word = ''
-        for row, line in enumerate(f, start=1):
+        inside_multiline_comment = False
+        for row, line in enumerate(f):
+          inside_string_constant = False
           # Need to do this, since words cannot spread over multiple lines. Must be done before updating self._row.
           if len(word) != 0:
             yield word
             word = ''
 
-          self._row = row
+          self._row = row + 1
           line = line.rstrip('\n')
+          i = 0
+          while i < len(line):
+            char = line[i]
+            i += 1
+            if inside_multiline_comment:
+              if char == '*' and i < len(line) and line[i] == '/':
+                inside_multiline_comment = False
+                i += 1
 
-          inside_string_constant = False
-          for column, char in enumerate(line, start=1):
-            if not inside_string_constant:
+              continue
+            elif not inside_string_constant:
               if char == '"':
                 inside_string_constant = True
               elif char in symbols or char == ' ':
                 if len(word) > 0:
                   yield word
                   word = ''
-                if char in symbols:
+
+                if char == ' ':
+                  continue
+                # Line comments start with // and cause the rest of the line to be ignored
+                # Multiline comments start with /* and cause the rest of the file to be ignored until it is closed by */
+                elif char == '/' and i < len(line) and line[i] == '*': 
+                  inside_multiline_comment = True
+                  i += 1
+                elif char == '/' and i < len(line) and line[i] == '/': 
+                  break
+                else:
                   # Keep track of position of symbols, since this branch bypasses where this would normally happen
-                  self._column = column
+                  self._column = i
                   yield char
 
                 continue
+
             # Allow double quotes inside string constant only in the case that it is escaped (\")
             elif inside_string_constant and char == '"' and word[-1] != '\\':
               inside_string_constant = False
@@ -71,8 +90,8 @@ class Tokenizer():
             word += char
             # Keep track of the beginning of each word
             if len(word) == 1:
-              self._column = column
-          
+              self._column = i
+
       if len(word) != 0:
         self._status = self.EStatus.FINISHED
         yield word

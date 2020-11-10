@@ -1,0 +1,9 @@
+/*
+class IgnoreMultilineComment() {
+  static int foo, bar
+  constructor IgnoreMultilineComment() {
+  */let foo = 5; /* TODO: Make this work */
+/*
+  }
+}
+*/

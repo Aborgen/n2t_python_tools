@@ -1,0 +1,1 @@
+let foo = 5; // There is a comment here... Better be ignored!
