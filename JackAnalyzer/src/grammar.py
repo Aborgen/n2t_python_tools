@@ -8,11 +8,13 @@ class ExpectedToken(Token):
     super()__init__(value, token_type, -1, -1)
 
 class GrammarObject():
-  _keywords : list = []
-  _ptr      : int  = 0
+  _keywords : list
+  _ptr      : int
   children  : Union[list[GrammarObject], str]
 
   def __init__(self) -> None:
+    self._keywords = []
+    self._ptr = 0
     self.children = []
 
 
@@ -64,44 +66,44 @@ class GrammarObject():
 # class identifier { class_variable_declaration* subroutine* }
 class AClass(GrammarObject):
   def __init__(self) -> None:
-    self._keywords = [ExpectedToken('class', 'keyword'), Identifier, ExpectedToken('{', 'symbol'), ClassVariableList, SubroutineList, ExpectedToken('}', 'symbol')]
     super().__init__()
+    self._keywords = [ExpectedToken('class', 'keyword'), Identifier, ExpectedToken('{', 'symbol'), ClassVariableList, SubroutineList, ExpectedToken('}', 'symbol')]
 
 # let identifier([expression])? = expression;
 class letStatement(GrammarObject):
   def __init__(self) -> None:
-    self._keywords = [ExpectedToken('let', 'keyword'), Identifier, {'optional': [ExpectedToken('[', 'symbol'), Expression, ExpectedToken(']', 'symbol')]},ExpectedToken('=', 'symbol'), Expression, ExpectedToken(';', 'symbol')] 
     super().__init__()
+    self._keywords = [ExpectedToken('let', 'keyword'), Identifier, {'optional': [ExpectedToken('[', 'symbol'), Expression, ExpectedToken(']', 'symbol')]},ExpectedToken('=', 'symbol'), Expression, ExpectedToken(';', 'symbol')] 
 
 # if (expression) { statement* } (else { statement* })?
 class ifStatement(GrammarObject):
   def __init__(self) -> None:
-    self._keywords = [ExpectedToken('if', 'keyword'), ExpectedToken('(', 'symbol'), Expression, ExpectedToken(')', 'symbol'), ExpectedToken('{', 'symbol'), Statements, ExpectedToken('}', 'symbol'), {'optional': [ExpectedToken('else', 'keyword'), ExpectedToken('{', 'symbol'), Statements, ExpectedToken('}', 'symbol')}]
     super().__init__()
+    self._keywords = [ExpectedToken('if', 'keyword'), ExpectedToken('(', 'symbol'), Expression, ExpectedToken(')', 'symbol'), ExpectedToken('{', 'symbol'), Statements, ExpectedToken('}', 'symbol'), {'optional': [ExpectedToken('else', 'keyword'), ExpectedToken('{', 'symbol'), Statements, ExpectedToken('}', 'symbol')}]
 
 # while (expression) { statement* }
 class whileStatement(GrammarObject):
   def __init__(self) -> None:
-    self._keywords = [ExpectedToken('while', 'keyword'), ExpectedToken('(', 'symbol', Expression, ExpectedToken(')', 'symbol'), ExpectedToken('{', 'symbol'), Statements, ExpectedToken('}', 'symbol')]
     super().__init__()
+    self._keywords = [ExpectedToken('while', 'keyword'), ExpectedToken('(', 'symbol', Expression, ExpectedToken(')', 'symbol'), ExpectedToken('{', 'symbol'), Statements, ExpectedToken('}', 'symbol')]
 
 # do subroutineCall;
 class doStatement(GrammarObject):
   def __init__(self) -> None:
-    self._keywords = [ExpectedToken('do', 'keyword'), SubroutineCall, ExpectedToken(';', 'symbol')]
     super().__init__()
+    self._keywords = [ExpectedToken('do', 'keyword'), SubroutineCall, ExpectedToken(';', 'symbol')]
 
 # return expression?;
 class returnStatement(GrammarObject):
   def __init__(self) -> None:
-    self._keywords = [ExpectedToken('return', 'keyword'), {'optional': [Expression]}, ExpectedToken(';', 'symbol')]
     super().__init__()
+    self._keywords = [ExpectedToken('return', 'keyword'), {'optional': [Expression]}, ExpectedToken(';', 'symbol')]
 
 # (constructor | function | method) type identifier (parameter*) { localVariable* statement* }
 class Subroutine(GrammarObject):
   def __init__(self) -> None:
-    self._keywords = [ExpectedToken('subroutine_type', ''), ExpectedToken('data_type', ''), Identifier, ExpectedToken('(', 'symbol'), {'optional': [ParameterList]}, ExpectedToken(')', 'symbol'), ExpectedToken('{', 'symbol'), {'optional': [LocalVariableList, Statements]}, ExpectedToken('}', 'symbol')]
     super().__init__()
+    self._keywords = [SubroutineType, DataType, Identifier, ExpectedToken('(', 'symbol'), {'optional': [ParameterList]}, ExpectedToken(')', 'symbol'), ExpectedToken('{', 'symbol'), {'optional': [LocalVariableList, Statements]}, ExpectedToken('}', 'symbol')]
 
 
   def deposit(self, obj: Union[Token, GrammarObject, dict]) -> None:
@@ -120,46 +122,41 @@ class Subroutine(GrammarObject):
     self._deposit(obj, expected)
     self._ptr += 1
     
+class DataType(GrammarObject):
+  def __init__(self) -> None:
+    super().__init__()
+    self._keywords = [{'any': [ExpectedToken('int', 'keyword'), ExpectedToken('char', 'keyword'), ExpectedToken('boolean', 'keyword'), Identifier}]
+
+class SubroutineType(GrammarObject):
+  def __init__(self) -> None:
+    super().__init__()
+    self._keywords = [{'any': [ExpectedToken('constructor', 'keyword'), ExpectedToken('function', 'keyword'), ExpectedToken('method', 'keyword')]}]
+
+class VariableType(GrammarObject):
+  def __init__(self) -> None:
+    super().__init__()
+    self._keywords = [{'any': [ExpectedToken('static', 'field')}]
 
 class Identifier(GrammarObject):
   def __init__(self) -> None:
-    self._keywords = [ExpectedToken('', 'identifier')]
     super().__init__()
+    self._keywords = [ExpectedToken('', 'identifier')]
 
 
   def deposit(self, obj: Token) -> None:
     if not type(obj) == Token or not obj.token_type == 'identifier'):
       raise ParserError()
 
+    self._keywords[0].value = obj.value
     super().deposit(obj)
 
+class ClassVariable(GrammarObject):
+  def __init__(self) -> None:
+    super().__init__()
+    self._keywords = [VariableType, DataType, Identifier, {'optional-repeat': [ExpectedToken(',', 'symbol'), Identifier]}, ExpectedToken(';', 'symbol')]
 
-@dataclass
-class SubroutineList():
-  _data: list[Subroutine]
+class Subroutine(GrammarObject):
+  def __init__(self) -> None:
+    super().__init__()
+    self._keywords = [SubroutineType, {'any': ['void', DataType]}, Identifier, ExpectedToken('(', 'symbol'), ParameterList, ExpectedToken(')', 'symbol'), SubroutineBody]
 
-  def __getitem__(self, key) -> Subroutine:
-    return self._data[key]
-
-
-  def __iter__(self):
-    return iter(self._data)
-
-
-  def __len__(self):
-    return len(self._data)
-
-@dataclass
-class ClassVariableList():
-  _data: list[ClassVariable]
-
-  def __getitem__(self, key) -> ClassVariable:
-    return self._data[key]
-
-
-  def __iter__(self):
-    return iter(self._data)
-
-
-  def __len__(self):
-    return len(self._data)
