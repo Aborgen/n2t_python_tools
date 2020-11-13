@@ -9,10 +9,13 @@ from .utils import clean_string_constant
 
 @dataclass
 class Token():
-  value     : str
+  value      : str
   token_type : str
-  line      : int
-  word      : int
+  line       : int = 0
+  word       : int = 0
+
+  def __eq__(self, other):
+    return (self.value == other.value) and (self.token_type == other.token_type)
 
 
 class Tokenizer():
