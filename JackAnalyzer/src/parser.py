@@ -139,8 +139,6 @@ class Parser():
     return statement
 
 
-
-
   def _compile_class_variables_declaration(self) -> list[ClassVariable]:
     return self._compile_parameter_or_variable_list(keywords=['static', 'field'], variable_class=ClassVariable)
 
@@ -150,7 +148,7 @@ class Parser():
     while self._peek_token() != '}':
       subroutine = Subroutine()
       self._compile_class_subroutine_declaration(subroutine)
-                                                # (constructor | method | fucntion) type identifier (parameter*)
+                                                # (constructor | method | function) type identifier (parameter*)
       token = self._next_token()
       subroutine.deposit(token)                 # {
       variables = self._compile_class_subroutine_variables_declaration()
