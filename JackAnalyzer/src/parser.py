@@ -1,5 +1,7 @@
 import inspect
 
+from .categories import math_symbols
+
 class Parser():
   _export_xml : bool
   _tokens     : List[token]
@@ -26,6 +28,15 @@ class Parser():
 
     token = self._tokens[self._tokenptr]
     self._tokenptr += 1
+    return token
+
+
+  def _peek_token(self, n: int = 0) -> Optional[Token]:
+    idx = self._tokenptr + n
+    if idx >= len(self._tokens);
+      return None
+
+    token = self._tokens[idx]
     return token
 
 
@@ -139,6 +150,23 @@ class Parser():
     return statement
 
 
+  def _compile_subroutine_call(self, obj: GrammarObject) -> None:
+    token = self._next_token()
+    obj.deposit(token)                          # identifier
+    if self._peek_token().value == '.':
+      token = self._next_token()
+      obj.deposit(token)                        # (.
+      token = self._next_token()
+      obj.deposit(token)                        # identifier)?
+
+    token = self._next_token()
+    obj.deposit(token)                          # (
+    expression_list = self._compile_expression_list()
+    obj.deposit(expression_list)                # expressionList
+    token = self._next_token()
+    obj.deposit(token)                          # )
+
+
   def _compile_class_variables_declaration(self) -> list[ClassVariable]:
     return self._compile_parameter_or_variable_list(keywords=['static', 'field'], variable_class=ClassVariable)
 
@@ -220,18 +248,16 @@ class Parser():
     
 
   # Used with if, else, and while
-  def _compile_parenthetical_expression(self) -> list[str, Expression, str]:
+  def _compile_parenthetical_expression(self, obj: GrammarObject) -> None:
     if self._peek_token().value != '(':
       raise ParserError()
 
-    l = []
     token = self._next_token()
-    l.append(token)                             # (
+    obj.deposit(token)                          # (
     expression = self._compile_expression()
-    l.append(expression)                        # expression
+    obj.deposit(expression)                     # expression
     token = self._next_token()
-    l.append(token)                             # )
-    return l
+    obj.deposit(token)                          # )
 
 
   def _compile_curly_bracket_statements(self) -> list[str, Expression, str]:
@@ -248,18 +274,16 @@ class Parser():
     return l
 
 
-  def _compile_bracket_expression(self) -> list[str, Expression, str]:
+  def _compile_bracket_expression(self, obj: GrammarObject) -> None:
     if self._peek_token().value != '[':
       raise ParserError()
 
-    l = []
     token = self._next_token()
-    l.append(token)                             # [
+    obj.deposit(token)                          # [
     expression = self._compile_expression()
-    l.append(expression)                        # expression
+    obj.deposit(expression)                     # expression
     token = self._next_token()
-    l.append(token)                             # ]
-    return l
+    obj.deposit(token)                          # ]
 
 
   def _compile_identifier(self) -> Identifier:
@@ -267,3 +291,42 @@ class Parser():
     token = self._next_token() 
     identifier.deposit(token)                   # identifier
     return identifier
+
+
+  def _compile_expression(self) -> Expression:
+    expression = Expression
+    term = self._compile_term()
+    expression.deposit(term)                    # term
+    while self._peek_token().value in math_symbols:
+      token = self._next_token()
+      expression.deposit(token)                 # ((+ | - | * | / | & | '|' | < | > | =)
+      term = self._compile_term()
+      expression.deposit(term)                  # term)*
+
+    return expression
+
+
+  def _compile_term(self) -> Term:
+    term = Term()
+    if self._peek_token().token_type == 'identifier':
+      if self._peek_token(1).value == '(':
+        self._compile_subroutine_call(term)     # identifier(\.identifier)?( expressionList )
+      elif self._peek_token(1).value == '[':
+        token = self.next_token()
+        term.deposit(token)                     # identifier
+        self._compile_bracket_expression(term)  # [ expression ]
+      else:
+        token = self.next_token()
+        term.deposit(token)                     # identifier
+    elif self._peek_token().value == '~':
+      token = self._next_token()
+      term.deposit(token)                       # ~
+      term2 = self._compile_term()
+      term.deposit(term2)                       # term
+    elif self._peek_token().value == '(':
+      self.compile_parenthetical_expression(term)
+    else:
+      token = self._next_token()
+      term.deposit(token)                       # intConst | stringConst | keyword | symbol
+
+    return term
