@@ -3,7 +3,6 @@ from dataclasses import dataclass
 
 from .tokenizer import Token
 
-
 class GrammarObject():
   _keywords : list
   _ptr      : int
@@ -65,7 +64,7 @@ class GrammarObject():
 
 
   def _is_comparable(self, obj: Union[Token, GrammarObject, dict], expected: Union[Token, GrammarObject, dict] -> bool:
-    if type(obj) == Token and type(expected) == Token:
+    if type(obj) == type(expected) == Token:
       return obj == expected
     elif type(expected) == dict:
       if len(expected) != 1:
@@ -83,28 +82,44 @@ class GrammarObject():
     return self._keywords[self._ptr]
 
 
-# class identifier { class_variable_declaration* subroutine* }
+# class Identifier { ClassVariableList SubroutineList }
 class AClass(GrammarObject):
   def __init__(self) -> None:
     keywords = [Token('class', 'keyword'), Identifier, Token('{', 'symbol'), ClassVariableList, SubroutineList, Token('}', 'symbol')]
     super().__init__('class', keywords)
 
-# let identifier([expression])? = expression;
+# let Identifier([Expression])? = Expression;
 class letStatement(GrammarObject):
   def __init__(self) -> None:
-    keywords = [Token('let', 'keyword'), Identifier, {'optional': [Token('[', 'symbol'), Expression, Token(']', 'symbol')]}, Token('=', 'symbol'), Expression, Token(';', 'symbol')] 
+    keywords = [
+      Token('let', 'keyword'), Identifier,
+      {'optional': [
+        Token('[', 'symbol'),
+        Expression,
+        Token(']', 'symbol')
+      ]},
+      Token('=', 'symbol'), Expression, Token(';', 'symbol')
+    ]
     super().__init__('letStatement', keywords)
 
-# if (expression) { statement* } (else { statement* })?
+# if (Expression) { StatementList } (else { statement* })?
 class ifStatement(GrammarObject):
   def __init__(self) -> None:
-    keywords = [Token('if', 'keyword'), Token('(', 'symbol'), Expression, Token(')', 'symbol'), Token('{', 'symbol'), Statements, Token('}', 'symbol'), {'optional': [Token('else', 'keyword'), Token('{', 'symbol'), Statements, Token('}', 'symbol')}]
+    keywords = [
+      Token('if', 'keyword'), Token('(', 'symbol'), Expression, Token(')', 'symbol'), Token('{', 'symbol'), StatementList, Token('}', 'symbol'),
+      {'optional': [
+        Token('else', 'keyword'),
+        Token('{', 'symbol'),
+        StatementList,
+        Token('}', 'symbol')
+      }
+    ]
     super().__init__('ifStatement', keywords)
 
 # while (expression) { statement* }
 class whileStatement(GrammarObject):
   def __init__(self) -> None:
-    keywords = [Token('while', 'keyword'), Token('(', 'symbol', Expression, Token(')', 'symbol'), Token('{', 'symbol'), Statements, Token('}', 'symbol')]
+    keywords = [Token('while', 'keyword'), Token('(', 'symbol', Expression, Token(')', 'symbol'), Token('{', 'symbol'), StatementList, Token('}', 'symbol')]
     super().__init__('whileStatement', keywords)
 
 # do subroutineCall;
@@ -113,16 +128,41 @@ class doStatement(GrammarObject):
     keywords = [Token('do', 'keyword'), SubroutineCall, Token(';', 'symbol')]
     super().__init__('doStatement', keywords)
 
+# identifier(\.identifier)?( expressionList )
+class SubroutineCall(GrammarObject):
+  def __init__(self) -> None:
+    keywords = [
+      Identifier,
+      {'optional': [
+        Token('.', 'symbol'),
+        Identifier
+      ]},
+      Token('(', 'symbol'), ExpressionList, Token(')', 'symbol')
+    ]
+    super().__init__(None, keywords)
+
 # return expression?;
 class returnStatement(GrammarObject):
   def __init__(self) -> None:
-    keywords = [Token('return', 'keyword'), {'optional': [Expression]}, Token(';', 'symbol')]
+    keywords = [
+      Token('return', 'keyword'),
+      {'optional': [
+        Expression
+      ]},
+      Token(';', 'symbol')
+    ]
     super().__init__('returnStatement', keywords)
 
 # (constructor | function | method) type identifier (parameter*) { localVariable* statement* }
 class Subroutine(GrammarObject):
   def __init__(self) -> None:
-    keywords = [SubroutineType, DataType, Identifier, Token('(', 'symbol'), {'optional': [ParameterList]}, Token(')', 'symbol'), SubroutineBody]
+    keywords = [
+      SubroutineType, DataType, Identifier, Token('(', 'symbol'),
+      {'optional': [
+        ParameterList
+      ]},
+      Token(')', 'symbol'), SubroutineBody
+    ]
     super().__init__('subroutineDec', keywords)
 
 
@@ -131,7 +171,7 @@ class Subroutine(GrammarObject):
       raise 'Tried to deposit too many objects'
 
     expected = self._expected()
-    if type(expected) == Token and type(obj) == Token and expected.value in ['subroutine_type', 'data_type']:
+    if type(expected) == type(obj) == Token:
       if expected.value == 'subroutine_type' and not validate_subroutine_type(obj.value):
         raise ParserError()
       elif expected.value == 'data_type' and not validate_data_type(obj.value):
@@ -140,32 +180,75 @@ class Subroutine(GrammarObject):
       expected.value, expected.token_type = obj.value, obj.token_type
 
     self._deposit(obj, expected)
-    self._ptr += 1
-    
+
+# subroutine*
+class SubroutineList(GrammarObject):
+  def __init__(self) -> None:
+    keywords = [
+      {'optional-repeat': [
+        Subroutine
+      ]}
+    ]
+    super().__init__(None, keywords)
+
+# (type identifier (, type identifier)*)?
 class ParameterList(GrammarObject):
   def __init__(self) -> None:
-    keywords = [DataType, Identifier, {'optional-repeat': [Token(',', 'symbol'), Identifier]}]
+    keywords = [
+      DataType, Identifier,
+      {'optional-repeat': [
+        Token(',', 'symbol'),
+        Identifier
+      ]}
+    ]
     super().__init__('parameterList', keywords)
 
+# { SubroutineVariableList StatementList }
 class SubroutineBody(GrammarObject):
   def __init__(self) -> None:
-    keywords = [Token('{', 'symbol'), {'optional': [LocalVariableList]}, {'optional': [Statements]}, Token('}', 'symbol')]
+    keywords = [
+      Token('{', 'symbol'),
+      {'optional': [
+        LocalVariableList
+      ]},
+      {'optional': [
+        StatementList
+      ]},
+      Token('}', 'symbol')
+    ]
     super().__init__('subroutineBody', keywords)
-
 
 class DataType(GrammarObject):
   def __init__(self) -> None:
-    keywords = [{'any': [Token('int', 'keyword'), Token('char', 'keyword'), Token('boolean', 'keyword'), Identifier}]
+    keywords = [
+      {'any': [
+        Token('int', 'keyword'),
+        Token('char', 'keyword'),
+        Token('boolean', 'keyword'),
+        Identifier
+      ]}
+    ]
     super().__init__(None, keywords)
 
 class SubroutineType(GrammarObject):
   def __init__(self) -> None:
-    keywords = [{'any': [Token('constructor', 'keyword'), Token('function', 'keyword'), Token('method', 'keyword')]}]
+    keywords = [
+      {'any': [
+        Token('constructor', 'keyword'),
+        Token('function', 'keyword'),
+        Token('method', 'keyword')
+      ]}
+    ]
     super().__init__(None, keywords)
 
 class VariableType(GrammarObject):
   def __init__(self) -> None:
-    keywords = [{'any': [Token('static', 'field')}]
+    keywords = [
+      {'any': [
+        Token('static', 'keyword'),
+        Token('field', 'keyword')
+      ]}
+    ]
     super().__init__(None, keywords)
 
 class Identifier(GrammarObject):
@@ -175,26 +258,65 @@ class Identifier(GrammarObject):
 
 
   def deposit(self, obj: Token) -> None:
-    if not type(obj) == Token or not obj.token_type == 'identifier'):
+    if self._ptr > len(self._keywords) - 1:
+      raise 'Tried to deposit too many objects'
+    elif type(obj) != Token or obj.token_type != 'identifier'):
       raise ParserError()
 
     self._keywords[0].value = obj.value
     super().deposit(obj)
 
+# VariableType DataType Identifier (, Identifier)*;
 class ClassVariable(GrammarObject):
   def __init__(self) -> None:
-    keywords = [VariableType, DataType, Identifier, {'optional-repeat': [Token(',', 'symbol'), Identifier]}, Token(';', 'symbol')]
-    super().__init__('classVarDec', keywords)
+    keywords = [
+      VariableType, DataType, Identifier,
+      {'optional-repeat': [
+        Token(',', 'symbol'),
+        Identifier
+      ]},
+      Token(';', 'symbol')
+    ]
+    super().__init__('varDec', keywords)
 
+# ClassVariable*
+class ClassVariableList(GrammarObject):
+  def __init__(self) -> None:
+    keywords = [
+      {'optional-repeat': [
+        ClassVariable
+      ]}
+    ]
+    super().__init__(None, keywords)
+
+# var DataType Identifier (, Identifier)*;
 class SubroutineVariable(GrammarObject):
   def __init__(self) -> None:
-    keywords = [Token('var', 'keyword'), DataType, Identifier, {'optional-repeat': [Token(',', 'symbol'), Identifier]}, Token(';', 'symbol')]
+    keywords = [
+      Token('var', 'keyword'), DataType, Identifier,
+      {'optional-repeat': [
+        Token(',', 'symbol'),
+        Identifier
+      ]},
+      Token(';', 'symbol')
+    ]
     super().__init__('varDec', keywords)
 
-class Statements(GrammarObject):
+# (letStatement | ifStatement | whileStatement | returnStatement | doStatement)*
+class StatementList(GrammarObject):
   def __init__(self) -> None:
-    keywords = [{'optional-repeat': [{'any': [letStatement, ifStatement, whileStatement, returnStatement]}]}]]}]
-    super().__init__('varDec', keywords)
+    keywords = [
+      {'optional-repeat': [
+        {'any': [
+          letStatement,
+          ifStatement,
+          doStatement,
+          whileStatement,
+          returnStatement
+        ]}
+      ]}
+    ]
+    super().__init__('statements', keywords)
 
 class Term(GrammarObject):
   def __init__(self) -> None:
@@ -208,9 +330,19 @@ class Term(GrammarObject):
         Token('this', 'keyword'),
         Token('-', 'symbol'),
         Token('~', 'keyword'),
-        Identifier, SubroutineCall,
-        { 'group': [Identifier, Token('(', 'symbol'), Expression, Token(')', 'symbol')] },
-        { 'group': [Identifier, Token('[', 'symbol'), Expression, Token(']', 'symbol')] },
+        Identifier,
+        SubroutineCall,
+        {'group': [
+          Token('(', 'symbol'),
+          Expression,
+          Token(')', 'symbol')
+        ]},
+        {'group': [
+          Identifier,
+          Token('[', 'symbol'),
+          Expression,
+          Token(']', 'symbol')
+        ]},
       ]},
       Term
     ]
@@ -222,12 +354,11 @@ class Term(GrammarObject):
       raise 'Tried to deposit too many objects'
 
     expected = self._expected()
-    if type(expected) == Token and type(obj) == Token
-      if (obj.token_type == 'integerConst' and expected.token_type == 'integerConst') or (obj.token_type == 'stringConst' and expected.token_type == 'stringConst'):
+    if type(expected) == type(obj) == Token:
+      if (obj.token_type == expected.token_type == 'integerConst') or (obj.token_type == expected.token_type == 'stringConst'):
         expected.value = obj.value
 
     self._deposit(obj, expected)
-    self._ptr += 1
 
 class Expression(GrammarObject):
   def __init__(self) -> None:
@@ -250,3 +381,15 @@ class Expression(GrammarObject):
     ]
     super().__init__('expression', keywords)
 
+class ExpressionList(GrammarObject):
+  def __init__(self) -> None:
+    keywords = [
+      {'optional': [
+        Expression,
+        {'optional-repeat': [
+          Token(',', 'symbol'),
+          Expression
+        ]}
+      ]}
+    ]
+    super().__init__('expressionList', keywords)
