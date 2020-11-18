@@ -1,6 +1,22 @@
 import inspect
 
 from .categories import math_symbols
+from .grammar import AClass
+from .grammar import ClassVariable
+from .grammar import ClassVariableList
+from .grammar import ExpressionList
+from .grammar import Identifier
+from .grammar import ParameterList
+from .grammar import StatementList
+from .grammar import SubroutineList
+from .grammar import SubroutineVariable
+from .grammar import SubroutineVariableList
+from .grammar import Term
+from .grammar import doStatement
+from .grammar import ifStatement
+from .grammar import letStatement
+from .grammar import returnStatement
+from .grammar import whileStatement
 
 class Parser():
   _export_xml : bool
@@ -83,16 +99,20 @@ class Parser():
     statement = ifStatement()
     token = self._next_token()
     statement.deposit(token)                    # if
-    p_expression = _compile_parenthetical_expression()
-    statement.deposit(p_e)                      # ( expression )
-    c_b_statements = _compile_curly_bracket_statements()
-    statement.deposit(c_b_statements)           # { statement* }
-    if self._peek_token().value == 'else':
-      token = self._next_token()
-      statement.deposit(token)                  # (else
-      c_b_statements = _compile_curly_bracket_statements()
-      statement.deposit(c_b_statements)         # { statement* })?
+    self._compile_parenthetical_expression(statement)
+                                                # ( expression )
+    self._compile_curly_bracket_statements(statement)
+                                                # { statement* }
 
+    group = {'optional': []}
+    if self._peek_token().value == 'else':
+      l = []
+      token = self._next_token()
+      l.append(token)
+      self._compile_curly_bracket_statements(l)
+      group['optional'] = l
+
+    statement.deposit(group)                    # (else { statement* })?
     return statement
 
 
@@ -100,10 +120,10 @@ class Parser():
     statement = whileStatement()
     token = self._next_token()
     statement.deposit(token)                    # while
-    p_expression = _compile_parenthetical_expression()
-    statement.deposit(p_e)                      # ( expression )
-    c_b_statements = _compile_curly_bracket_statements()
-    statement.deposit(c_b_statements)           # { statement* }
+    self._compile_parenthetical_expression(statement)
+                                                # ( expression )
+    self._compile_curly_bracket_statements(statement)
+                                                # { statement* }
     return statement
 
 
@@ -113,10 +133,14 @@ class Parser():
     statement.deposit(token)                    # let
     token = self._next_token()
     statement.deposit(token)                    # identifier
-    if self._peek_token().value == '[':
-      b_expression = self._compile_bracket_expression()
-      statement.deposit(b_expression)           # ([expression])?
 
+    group = {'optional': []}
+    if self._peek_token().value == '[':
+      l = []
+      self._compile_bracket_expression(l)
+      group['optional'] = l
+
+    statement.deposit(group)                    # ([expression])?
     token = self._next_token()
     statement.deposit(token)                    # =
     expression = self._compile_expression()
@@ -141,10 +165,13 @@ class Parser():
     statement = returnStatement()
     token = self._next_token()
     statement.deposit(token)                    # return
+
+    group = {'optional': []}
     if self._peek_token().value != ';':
       expression = self._compile_expression()
-      statement.deposit(expression)             # expression?
+      group['optional'].append(expression)
 
+    statement.deposit(group)                    # expression?
     token = self._next_token()
     statement.deposit(token)                    # ;
     return statement
@@ -153,12 +180,15 @@ class Parser():
   def _compile_subroutine_call(self, obj: GrammarObject) -> None:
     token = self._next_token()
     obj.deposit(token)                          # identifier
+
+    group = {'optional': []}
     if self._peek_token().value == '.':
       token = self._next_token()
-      obj.deposit(token)                        # (.
+      group['optional'].append(token)
       token = self._next_token()
-      obj.deposit(token)                        # identifier)?
+      group['optional'].append(token)
 
+    obj.deposit(group)                          # (.identifier)?
     token = self._next_token()
     obj.deposit(token)                          # (
     expression_list = self._compile_expression_list()
@@ -167,12 +197,12 @@ class Parser():
     obj.deposit(token)                          # )
 
 
-  def _compile_class_variables_declaration(self) -> list[ClassVariable]:
-    return self._compile_parameter_or_variable_list(keywords=['static', 'field'], variable_class=ClassVariable)
+  def _compile_class_variables_declaration(self) -> ClassVariableList:
+    return self._compile_typed_variable_list(keywords=['static', 'field'], variable_container=ClassVariableList, variable_class=ClassVariable)
 
 
-  def _compile_class_subroutines(self) -> list[Subroutine]:
-    subroutines = []
+  def _compile_class_subroutines(self) -> SubroutineList:
+    subroutines = SubroutineList()
     while self._peek_token() != '}':
       subroutine = Subroutine()
       self._compile_class_subroutine_declaration(subroutine)
@@ -198,60 +228,74 @@ class Parser():
     subroutine.deposit(identifier)              # identifier
     token = self._next_token()
     subroutine.deposit(token)                   # (
-    if self._peek_token() != ')':
-      self._compile_class_subroutine_parameters(subroutine)
-                                                # parameter*
+    parameters = self._compile_class_subroutine_parameters()
+    subroutine.deposit(parameters)              # parameter*
     token = self._next_token()
     subroutine.deposit(token)                   # )
 
 
-  def _compile_class_subroutine_parameters(self, subroutine: Subroutine) -> None:
-    while True:
+  def _compile_class_subroutine_parameters(self) -> ParameterList:
+    parameters = ParameterList()
+    group = {'optional': []}
+    if self._peek_token() != ')':
       token = self._next_token()
-      subroutine.deposit(token)                 # type
+      group['optional'].append(token)           # type
       identifier = self._compile_identifier()
-      subroutine.deposit(identifier)            # identifier
-      if self._peek_token() == ')':
-        break
+      group['optional'].append(identifier)      # identifier
 
-      token = self._next_token()
-      subroutine.deposit(token)                 # ,
+      repeat = {'optional-repeat': []}
+      while self._peek_token() != ')':
+        token = self._next_token()
+        repeat['optional-repeat'].append(token) # ,
+        token = self._next_token()
+        repeat['optional-repeat'].append(token) # type
+        identifier = self._compile_identifier()
+        repeat['optional-repeat'].append(identifier)
+                                                # identifier
+
+      group['optional'].append(repeat)
+
+    parameters.deposit(group)
+    return parameters
 
 
-  def _compile_class_subroutine_variables_declaration(self) -> list[SubroutineVariable]:
-    return self._compile_parameter_or_variable_list(keywords=['var'], variable_class=SubroutineVariable)
+  def _compile_class_subroutine_variables_declaration(self) -> SubroutineVariableList:
+    return self._compile_typed_variable_list(keywords=['var'], variable_container=SubroutineVariableList, variable_class=SubroutineVariable)
 
 
-  def _compile_parameter_or_variable_list(self, keywords: list[str], variable_class: Generic[G]) -> list[G]:
+  def _compile_typed_variable_list(self, keywords: list[str], variable_container: Generic[C], variable_class: Generic[G]) -> C:
     if not inspect.isclass(variable_class):
-      raise f'The provided class is not of type class: {variable_class}'
+      raise f'The provided value to variable_class must be a class: [{variable_class}{type(variable_class)}]'
 
-    variables = []
+    variables = variable_container()
+    repeat = {'optional-repeat': []}
     while self._peek_token() in keywords:
-      variable = obj()
+      variable = variable_class()
       token = self._next_token()
       variable.deposit(token)                   # keywords[n]
       token = self._next_token()
       variable.deposit(token)                   # type
       identifier = self._compile_identifier()
       variable.deposit(identifier)              # identifier
+
+      inner_repeat = {'optional-repeat': []}
       while self._peek_token.value != ';':
         token = self._next_token()
-        variable.deposit(token)                 # (,
+        inner_repeat['optional-repeat'].append(token)
         identifier = self._compile_identifier()
-        variable.deposit(identifier)            # identifier)*
+        inner_repeat['optional-repeat'].append(identifier)
 
+      variable.deposit(inner_repeat)            # (,identifier)*
       token = self._next_token()
       variable.deposit(token)                   # ;
+      repeat['optional-repeat'].append([variable])
 
+    variables.deposit(repeat)
     return variables
     
 
-  # Used with if, else, and while
+  # Used with if and while
   def _compile_parenthetical_expression(self, obj: GrammarObject) -> None:
-    if self._peek_token().value != '(':
-      raise ParserError()
-
     token = self._next_token()
     obj.deposit(token)                          # (
     expression = self._compile_expression()
@@ -260,24 +304,23 @@ class Parser():
     obj.deposit(token)                          # )
 
 
-  def _compile_curly_bracket_statements(self) -> list[str, Expression, str]:
-    l = []
-    token = self._next_token()
-    l.append(token)                             # {
-    if self._peek_token().value != '}':
-      statements = self._compile_statements()
-      if statements:
-        l.append(expression)                    # statement*
-
-    token = self._next_token()
-    l.append(token)                             # }
-    return l
+  def _compile_curly_bracket_statements(self, container: Union[GrammarObject, list]) -> None:
+    token1 = self._next_token()
+    statements = self._compile_statements()
+    token2 = self._next_token()
+    if type(container) == GrammarObject:
+      container.deposit(token)                  # {
+      container.deposit(statements)             # statement*
+      container.deposit(token2)                 # }
+    elif type(container) == list:
+      container.append(token)                   # {
+      container.append(statements)              # statement*
+      container.append(token2)                  # }
+    else:
+      raise 'Error'
 
 
   def _compile_bracket_expression(self, obj: GrammarObject) -> None:
-    if self._peek_token().value != '[':
-      raise ParserError()
-
     token = self._next_token()
     obj.deposit(token)                          # [
     expression = self._compile_expression()
@@ -297,12 +340,15 @@ class Parser():
     expression = Expression
     term = self._compile_term()
     expression.deposit(term)                    # term
+
+    group = {'optional': []}
     while self._peek_token().value in math_symbols:
       token = self._next_token()
-      expression.deposit(token)                 # ((+ | - | * | / | & | '|' | < | > | =)
+      group['optional'].append(token)
       term = self._compile_term()
-      expression.deposit(term)                  # term)*
+      group['optional'].append(term)
 
+    expression.deposit(group)                   # ((+ | - | * | / | & | '|' | < | > | =) term)*
     return expression
 
 
@@ -312,19 +358,27 @@ class Parser():
       if self._peek_token(1).value == '(':
         self._compile_subroutine_call(term)     # identifier(\.identifier)?( expressionList )
       elif self._peek_token(1).value == '[':
+        l = []
         token = self.next_token()
-        term.deposit(token)                     # identifier
-        self._compile_bracket_expression(term)  # [ expression ]
+        l.append(token)
+        self._compile_bracket_expression(l)
+        group = {'group': l}
+        term.deposit(group)                     # identifier[ expression ]
       else:
         token = self.next_token()
         term.deposit(token)                     # identifier
     elif self._peek_token().value == '~':
+      group = {'group': []}
       token = self._next_token()
-      term.deposit(token)                       # ~
+      group['group'].append(token)
       term2 = self._compile_term()
-      term.deposit(term2)                       # term
+      group['group'].append(term2)
+      term.deposit(group)                       # ~term
     elif self._peek_token().value == '(':
-      self.compile_parenthetical_expression(term)
+      l = []
+      self.compile_parenthetical_expression(l)
+      group = {'group': l}
+      term.deposit(group)                       # ( expression )
     else:
       token = self._next_token()
       term.deposit(token)                       # intConst | stringConst | keyword | symbol

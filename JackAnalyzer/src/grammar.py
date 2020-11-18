@@ -37,12 +37,17 @@ class GrammarObject():
     elif type(expected) == dict:
       key = list(expected.keys())[0]
       if key == 'optional':
-        self._deposit_group(obj, expected[key])
+        if len(obj[key]) == 0:
+          return
+
+        self._deposit_group(obj[key], expected[key])
+      elif key == 'group':
+        self._deposit_group(obj[key], expected[key])
       elif key == 'optional-repeat':
         if type(obj) != list:
           raise ParserError()
 
-        for group in obj:
+        for group in obj[key]:
           self._deposit_group(group, expected[key])
       elif key == 'any' and obj not in expected[key]:
         raise ParserError(f'Not a correct option: {obj} not among [{", ".join(expected[key]}]')
@@ -66,11 +71,12 @@ class GrammarObject():
   def _is_comparable(self, obj: Union[Token, GrammarObject, dict], expected: Union[Token, GrammarObject, dict] -> bool:
     if type(obj) == type(expected) == Token:
       return obj == expected
-    elif type(expected) == dict:
-      if len(expected) != 1:
+    elif type(obj) == type(expected) == dict:
+      if not (len(expected) == len(obj) == 1):
         raise 'Dict should only have one key'
-      else:
-        return True
+      
+      key = list(expected.keys())[0]
+      return key in obj and key in expected and len(obj[key]) == len(expected[key])
     else:
       return inspect.isclass(expected) and isinstance(obj, expected)
 
@@ -153,16 +159,10 @@ class returnStatement(GrammarObject):
     ]
     super().__init__('returnStatement', keywords)
 
-# (constructor | function | method) type identifier (parameter*) { localVariable* statement* }
+# (constructor | function | method) type identifier ( parameter* ) { localVariable* statement* }
 class Subroutine(GrammarObject):
   def __init__(self) -> None:
-    keywords = [
-      SubroutineType, DataType, Identifier, Token('(', 'symbol'),
-      {'optional': [
-        ParameterList
-      ]},
-      Token(')', 'symbol'), SubroutineBody
-    ]
+    keywords = [SubroutineType, DataType, Identifier, Token('(', 'symbol'), ParameterList, Token(')', 'symbol'), SubroutineBody]
     super().__init__('subroutineDec', keywords)
 
 
@@ -195,10 +195,13 @@ class SubroutineList(GrammarObject):
 class ParameterList(GrammarObject):
   def __init__(self) -> None:
     keywords = [
-      DataType, Identifier,
-      {'optional-repeat': [
-        Token(',', 'symbol'),
-        Identifier
+      {'optional': [
+        DataType,
+        Identifier,
+        {'optional-repeat': [
+          Token(',', 'symbol'),
+          Identifier
+        ]}
       ]}
     ]
     super().__init__('parameterList', keywords)
@@ -302,6 +305,15 @@ class SubroutineVariable(GrammarObject):
     ]
     super().__init__('varDec', keywords)
 
+class SubroutineVariableList(GrammarObject):
+  def __init__(self) -> None:
+    keywords = [
+      {'optional-repeat': [
+        SubroutineVariable
+      ]}
+    ]
+    super().__init__(None, keywords)
+
 # (letStatement | ifStatement | whileStatement | returnStatement | doStatement)*
 class StatementList(GrammarObject):
   def __init__(self) -> None:
@@ -328,8 +340,7 @@ class Term(GrammarObject):
         Token('false', 'keyword'),
         Token('null', 'keyword'),
         Token('this', 'keyword'),
-        Token('-', 'symbol'),
-        Token('~', 'keyword'),
+        Token('-', 'keyword'),
         Identifier,
         SubroutineCall,
         {'group': [
@@ -343,8 +354,11 @@ class Term(GrammarObject):
           Expression,
           Token(']', 'symbol')
         ]},
-      ]},
-      Term
+        {'group': [
+          Token('~', 'symbol'),
+          Term
+        ]}
+      ]}
     ]
     super().__init__('term', keywords)
 
