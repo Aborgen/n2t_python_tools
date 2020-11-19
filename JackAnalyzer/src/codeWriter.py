@@ -10,7 +10,7 @@ class CodeWriter():
     out_file = out_file.parent / (out_file.name + '.xml')
     root = ET.Element('tokens')
     for token in tokens:
-      ET.SubElement(root, token.tokenType).text = token.value
+      ET.SubElement(root, token.token_type).text = token.value
 
     tree = ET.ElementTree(root)
     tree.write(out_file, encoding='utf-8', xml_declaration=True)

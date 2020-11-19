@@ -12,6 +12,8 @@ symbols = set([
 
 math_symbols = set(['+', '-', '*', '/', '&', '|', '<', '>', '='])
 
+type_keywords = set(['int', 'char', 'boolean'])
+
 def is_integer_constant(n: int) -> bool:
   try:
     n = int(n)

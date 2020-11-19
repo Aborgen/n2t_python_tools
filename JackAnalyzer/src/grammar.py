@@ -1,88 +1,86 @@
+from __future__ import annotations # Needed to refer to GrammarObject within Grammarobject
+
 import inspect
 from dataclasses import dataclass
+from typing import Union
 
+from .exceptions import ParserError
 from .tokenizer import Token
 
 class GrammarObject():
-  _keywords : list
+  _keywords : list[Union[Token, GrammarObject]]
   _ptr      : int
-  children  : Union[list[GrammarObject], str]
-  label:    : str
+  children  : list[Union[Token, GrammarObject]]
+  label     : Optional[str]
 
-  def __init__(self, keywords: Union[list[GrammarObject], str], label: str) -> None:
+  def __init__(self, label: Optional[str], keywords: Union[list[GrammarObject], str]) -> None:
     self._keywords = keywords
     self._ptr = 0
     self.children = []
     self.label = label
 
 
-  def __init__(self, children: Union[list[GrammarObject], str]) -> None:
-    self.children = children
-
-
   def deposit(self, obj: Union[Token, GrammarObject]) -> None:
-    if self._ptr > len(self._keywords) - 1:
+    if self._ptr >= len(self._keywords):
       raise 'Tried to deposit too many objects'
 
     expected = self._expected()
     self._deposit(obj, expected)
+    self._ptr += 1
 
 
-  def _deposit(self, obj: Union[Token, GrammarObject, dict], expected: Union[Token, GrammarObject, dict] -> None:
-    if not _is_comparable(obj, expected):
-      raise ParserError('Statement!')
+  def _deposit(self, obj: Union[Token, GrammarObject, dict], expected: Union[Token, GrammarObject, dict]) -> None:
+    if not self._is_comparable(obj, expected):
+      raise ParserError('Token given does not match what is expected')
 
-    if type(expected) == Token:
-      obj = GrammarObject(children=obj.value)
-    elif type(expected) == dict:
+    if type(expected) == dict:
       key = list(expected.keys())[0]
       if key == 'optional':
-        if len(obj[key]) == 0:
-          return
-
-        self._deposit_group(obj[key], expected[key])
+        if len(obj[key]) > 0:
+          self._deposit_group(obj[key], expected[key])
       elif key == 'group':
         self._deposit_group(obj[key], expected[key])
       elif key == 'optional-repeat':
-        if type(obj) != list:
-          raise ParserError()
+        if len(obj[key]) == 0:
+          return
 
         for group in obj[key]:
           self._deposit_group(group, expected[key])
-      elif key == 'any' and obj not in expected[key]:
-        raise ParserError(f'Not a correct option: {obj} not among [{", ".join(expected[key]}]')
+      elif key == 'any':
+        if not any(obj == v or inspect.isclass(v) and isinstance(obj, v) for v in expected[key]):
+          raise ParserError(f'Not a correct option: {obj[key]} not among {str(expected[key])}')
+        
+        self.children.append(obj)
       else:
         raise ParserError(f'Unrecognized key: {key}')
-
-    self._ptr += 1
-    self.children.append(obj)
-
-
-    def _deposit_group(self, group: list, template: list) -> None:
-      if type(group) != list or type(template) != list:
-        raise ParserError('Must be list')
-      elif len(group) != len(template):
-        raise ParserError('Must be same length')
-
-      for a, b in zip(group, template):
-        self._deposit(a, b)
+    else:
+      self.children.append(obj)
 
 
-  def _is_comparable(self, obj: Union[Token, GrammarObject, dict], expected: Union[Token, GrammarObject, dict] -> bool:
+  def _deposit_group(self, group: list[Union[Token, GrammarObject, dict]], template: list[Union[Token, GrammarObject, dict]]) -> None:
+    if type(group) != list or type(template) != list:
+      raise ParserError('Must be list')
+    elif len(group) != len(template):
+      raise ParserError('Must be same length')
+
+    for a, b in zip(group, template):
+      self._deposit(a, b)
+
+
+  def _is_comparable(self, obj: Union[Token, GrammarObject, dict], expected: Union[Token, GrammarObject, dict]) -> bool:
     if type(obj) == type(expected) == Token:
       return obj == expected
-    elif type(obj) == type(expected) == dict:
-      if not (len(expected) == len(obj) == 1):
+    elif type(expected) == dict:
+      if not (len(expected) == 1):
         raise 'Dict should only have one key'
       
-      key = list(expected.keys())[0]
-      return key in obj and key in expected and len(obj[key]) == len(expected[key])
+      return True
     else:
       return inspect.isclass(expected) and isinstance(obj, expected)
 
 
-  def _expected_keyword(self) -> str:
-    if self._ptr > len(self._keywords) - 1:
+  def _expected(self) -> Union[Token, GrammarObject]:
+    if self._ptr >= len(self._keywords):
       raise ParserError()
 
     return self._keywords[self._ptr]
@@ -118,14 +116,14 @@ class ifStatement(GrammarObject):
         Token('{', 'symbol'),
         StatementList,
         Token('}', 'symbol')
-      }
+      ]}
     ]
     super().__init__('ifStatement', keywords)
 
 # while (expression) { statement* }
 class whileStatement(GrammarObject):
   def __init__(self) -> None:
-    keywords = [Token('while', 'keyword'), Token('(', 'symbol', Expression, Token(')', 'symbol'), Token('{', 'symbol'), StatementList, Token('}', 'symbol')]
+    keywords = [Token('while', 'keyword'), Token('(', 'symbol'), Expression, Token(')', 'symbol'), Token('{', 'symbol'), StatementList, Token('}', 'symbol')]
     super().__init__('whileStatement', keywords)
 
 # do subroutineCall;
@@ -165,22 +163,6 @@ class Subroutine(GrammarObject):
     keywords = [SubroutineType, DataType, Identifier, Token('(', 'symbol'), ParameterList, Token(')', 'symbol'), SubroutineBody]
     super().__init__('subroutineDec', keywords)
 
-
-  def deposit(self, obj: Union[Token, GrammarObject, dict]) -> None:
-    if self._ptr > len(self._keywords) - 1:
-      raise 'Tried to deposit too many objects'
-
-    expected = self._expected()
-    if type(expected) == type(obj) == Token:
-      if expected.value == 'subroutine_type' and not validate_subroutine_type(obj.value):
-        raise ParserError()
-      elif expected.value == 'data_type' and not validate_data_type(obj.value):
-        raise ParserError()
-
-      expected.value, expected.token_type = obj.value, obj.token_type
-
-    self._deposit(obj, expected)
-
 # subroutine*
 class SubroutineList(GrammarObject):
   def __init__(self) -> None:
@@ -209,16 +191,7 @@ class ParameterList(GrammarObject):
 # { SubroutineVariableList StatementList }
 class SubroutineBody(GrammarObject):
   def __init__(self) -> None:
-    keywords = [
-      Token('{', 'symbol'),
-      {'optional': [
-        LocalVariableList
-      ]},
-      {'optional': [
-        StatementList
-      ]},
-      Token('}', 'symbol')
-    ]
+    keywords = [Token('{', 'symbol'), SubroutineVariableList, StatementList, Token('}', 'symbol')]
     super().__init__('subroutineBody', keywords)
 
 class DataType(GrammarObject):
@@ -228,6 +201,7 @@ class DataType(GrammarObject):
         Token('int', 'keyword'),
         Token('char', 'keyword'),
         Token('boolean', 'keyword'),
+        Token('void', 'keyword'),
         Identifier
       ]}
     ]
@@ -261,9 +235,9 @@ class Identifier(GrammarObject):
 
 
   def deposit(self, obj: Token) -> None:
-    if self._ptr > len(self._keywords) - 1:
+    if self._ptr >= len(self._keywords):
       raise 'Tried to deposit too many objects'
-    elif type(obj) != Token or obj.token_type != 'identifier'):
+    elif type(obj) != Token or obj.token_type != 'identifier':
       raise ParserError()
 
     self._keywords[0].value = obj.value
@@ -340,7 +314,7 @@ class Term(GrammarObject):
         Token('false', 'keyword'),
         Token('null', 'keyword'),
         Token('this', 'keyword'),
-        Token('-', 'keyword'),
+        Token('-', 'symbol'),
         Identifier,
         SubroutineCall,
         {'group': [
@@ -364,15 +338,19 @@ class Term(GrammarObject):
 
 
   def deposit(self, obj: Union[Token, GrammarObject]) -> None:
-    if self._ptr > len(self._keywords) - 1:
+    if self._ptr >= len(self._keywords):
       raise 'Tried to deposit too many objects'
 
     expected = self._expected()
-    if type(expected) == type(obj) == Token:
-      if (obj.token_type == expected.token_type == 'integerConst') or (obj.token_type == expected.token_type == 'stringConst'):
-        expected.value = obj.value
+    if type(obj) == Token and (obj.token_type == 'stringConst' or obj.token_type == 'intConst'):
+      for v in expected['any']:
+        if obj.token_type == v.token_type:
+          v.value = obj.value
+          break
+
 
     self._deposit(obj, expected)
+    self._ptr += 1
 
 class Expression(GrammarObject):
   def __init__(self) -> None:
