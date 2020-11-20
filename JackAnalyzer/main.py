@@ -1,10 +1,11 @@
-from __future__ import annotations # Needed to refer to GrammarObject within Grammarobject
+from __future__ import annotations
 
 from pathlib import Path
-from typing import List
+from typing import Union
 import xml.etree.cElementTree as ET
 
 from .src.codeWriter import CodeWriter
+from .src.grammar import GrammarObject
 from .src.parser import Parser
 from .src.tokenizer import Token, Tokenizer
 
@@ -18,12 +19,13 @@ def JackAnalyzer(source: Path, out_file: Path, export_tokens: bool = False) -> N
 
     tokens.append(token)
 
-  if export_tokens:
-    _export_xml_tokens(tokens, out_file)
 
   parser = Parser(tokens, source, out_file, export_tokens)
-  parser.parse()
+  obj = parser.parse()
+  if export_tokens:
+    _export_xml_tokens(tokens, obj, out_file)
 
 
-def _export_xml_tokens(tokens: List[Token], out_file: Path) -> None:
+def _export_xml_tokens(tokens: list[Token], obj: GrammarObject, out_file: Path) -> None:
   CodeWriter.export_tokens_as_xml(tokens, out_file)
+  CodeWriter.export_grammar_objects_as_xml(obj, out_file)
