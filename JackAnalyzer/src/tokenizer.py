@@ -15,7 +15,7 @@ class Token():
   word       : int = 0
 
   def __eq__(self, other):
-    return (self.value == other.value) and (self.token_type == other.token_type)
+    return type(self) == type(other) and (self.value == other.value) and (self.token_type == other.token_type)
 
 
 class Tokenizer():
