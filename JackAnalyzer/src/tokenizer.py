@@ -121,10 +121,10 @@ class Tokenizer():
     elif word in symbols:
       token.token_type = 'symbol'
     elif is_integer_constant(word):
-      token.token_type = 'intConst'
+      token.token_type = 'integerConstant'
     elif is_string_constant(word):
       token.value = clean_string_constant(word)
-      token.token_type = 'stringConst'
+      token.token_type = 'stringConstant'
     elif is_identifier(word):
       token.token_type = 'identifier'
     else:
