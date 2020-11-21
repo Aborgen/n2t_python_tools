@@ -19,7 +19,6 @@ def JackAnalyzer(source: Path, out_file: Path, export_tokens: bool = False) -> N
 
     tokens.append(token)
 
-
   parser = Parser(tokens, source, out_file, export_tokens)
   obj = parser.parse()
   if export_tokens:

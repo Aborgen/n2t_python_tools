@@ -47,10 +47,23 @@ class GrammarObject():
         for group in obj[key]:
           self._deposit_group(group, expected[key])
       elif key == 'any':
-        if not any(obj == v or inspect.isclass(v) and isinstance(obj, v) for v in expected[key]):
-          raise ParserError(f'Not a correct option: {obj[key]} not among {str(expected[key])}')
-        
-        self.children.append(obj)
+        if type(obj) == dict:
+          successful_deposit = False
+          for v in expected[key]:
+            if type(v) == dict:
+              try:
+                self._deposit(obj, v)
+                successful_deposit = True
+                break
+              except ParserError as e:
+                pass
+
+          if not successful_deposit:
+            raise ParserError(f'Expected anything in {str(expected[key])}, but got {obj}')
+        elif not any(obj == v or inspect.isclass(v) and isinstance(obj, v) for v in expected[key]):
+          raise ParserError(f'Not a correct option: {obj} not among {str(expected[key])}')
+        else:
+          self.children.append(obj)
       else:
         raise ParserError(f'Unrecognized key: {key}')
     else:
@@ -182,6 +195,7 @@ class ParameterList(GrammarObject):
         Identifier,
         {'optional-repeat': [
           Token(',', 'symbol'),
+          DataType,
           Identifier
         ]}
       ]}
@@ -218,12 +232,21 @@ class SubroutineType(GrammarObject):
     ]
     super().__init__(None, keywords)
 
-class VariableType(GrammarObject):
+class ClassVariableType(GrammarObject):
   def __init__(self) -> None:
     keywords = [
       {'any': [
         Token('static', 'keyword'),
         Token('field', 'keyword')
+      ]}
+    ]
+    super().__init__(None, keywords)
+
+class SubroutineVariableType(GrammarObject):
+  def __init__(self) -> None:
+    keywords = [
+      {'any': [
+        Token('var', 'keyword')
       ]}
     ]
     super().__init__(None, keywords)
@@ -243,11 +266,11 @@ class Identifier(GrammarObject):
     self._keywords[0].value = obj.value
     super().deposit(obj)
 
-# VariableType DataType Identifier (, Identifier)*;
+# ClassVariableType DataType Identifier (, Identifier)*;
 class ClassVariable(GrammarObject):
   def __init__(self) -> None:
     keywords = [
-      VariableType, DataType, Identifier,
+      ClassVariableType, DataType, Identifier,
       {'optional-repeat': [
         Token(',', 'symbol'),
         Identifier
@@ -266,11 +289,11 @@ class ClassVariableList(GrammarObject):
     ]
     super().__init__(None, keywords)
 
-# var DataType Identifier (, Identifier)*;
+# SubroutineVariableType DataType Identifier (, Identifier)*;
 class SubroutineVariable(GrammarObject):
   def __init__(self) -> None:
     keywords = [
-      Token('var', 'keyword'), DataType, Identifier,
+      SubroutineVariableType, DataType, Identifier,
       {'optional-repeat': [
         Token(',', 'symbol'),
         Identifier
@@ -308,8 +331,8 @@ class Term(GrammarObject):
   def __init__(self) -> None:
     keywords = [
       {'any': [
-        Token('', 'integerConst'),
-        Token('', 'stringConst'),
+        Token('', 'integerConstant'),
+        Token('', 'stringConstant'),
         Token('true', 'keyword'),
         Token('false', 'keyword'),
         Token('null', 'keyword'),
@@ -342,12 +365,11 @@ class Term(GrammarObject):
       raise 'Tried to deposit too many objects'
 
     expected = self._expected()
-    if type(obj) == Token and (obj.token_type == 'stringConst' or obj.token_type == 'intConst'):
+    if type(obj) == Token and (obj.token_type == 'stringConstant' or obj.token_type == 'integerConstant'):
       for v in expected['any']:
         if obj.token_type == v.token_type:
           v.value = obj.value
           break
-
 
     self._deposit(obj, expected)
     self._ptr += 1
