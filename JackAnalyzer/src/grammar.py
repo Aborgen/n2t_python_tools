@@ -337,7 +337,6 @@ class Term(GrammarObject):
         Token('false', 'keyword'),
         Token('null', 'keyword'),
         Token('this', 'keyword'),
-        Token('-', 'symbol'),
         Identifier,
         SubroutineCall,
         {'group': [
@@ -352,7 +351,10 @@ class Term(GrammarObject):
           Token(']', 'symbol')
         ]},
         {'group': [
-          Token('~', 'symbol'),
+          {'any': [
+            Token('-', 'symbol'),
+            Token('~', 'symbol')
+          ]},
           Term
         ]}
       ]}

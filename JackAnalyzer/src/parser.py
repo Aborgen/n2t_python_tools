@@ -369,13 +369,20 @@ class Parser():
       raise Exception(f'Unsupported type of container. Accepts: [GrammarObject, list], Received: {type(container)}')
 
 
-  def _compile_bracket_expression_to_ref(self, obj: GrammarObject) -> None:
-    token = self._next_token()
-    obj.deposit(token)                          # [
+  def _compile_bracket_expression_to_ref(self, container: Union[GrammarObject, list]) -> None:
+    token1 = self._next_token()
     expression = self._compile_expression()
-    obj.deposit(expression)                     # expression
-    token = self._next_token()
-    obj.deposit(token)                          # ]
+    token2 = self._next_token()
+    if isinstance(container, GrammarObject):
+      container.deposit(token1)                 # [
+      container.deposit(expression)             # expression*
+      container.deposit(token2)                 # ]
+    elif type(container) == list:
+      container.append(token1)                  # [
+      container.append(expression)              # expression*
+      container.append(token2)                  # ]
+    else:
+      raise Exception(f'Unsupported type of container. Accepts: [GrammarObject, list], Received: {type(container)}')
 
 
   def _compile_identifier(self) -> Identifier:
@@ -453,13 +460,13 @@ class Parser():
       else:
         identifier = self._compile_identifier()
         term.deposit(identifier)                # identifier
-    elif self._peek_token().value == '~':
+    elif self._peek_token().value == '~' or self._peek_token().value == '-':
       group = {'group': []}
       token = self._next_token()
       group['group'].append(token)
       term2 = self._compile_term()
       group['group'].append(term2)
-      term.deposit(group)                       # ~term
+      term.deposit(group)                       # (~ | -)term
     elif self._peek_token().value == '(':
       l = []
       self._compile_parenthetical_expression_to_ref(l)
