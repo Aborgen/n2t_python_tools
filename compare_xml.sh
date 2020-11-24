@@ -25,7 +25,7 @@ do
   b="$SECOND_DIR/$filename"
   # From Jukka Matilainen's stackexchange answer: https://superuser.com/a/81036
   # Compares the flattened Canonical XML versions of both files. Will let user know whether they are identical or not.
-  if ! diff -s --brief --label "$a" --label "$b" <(xmllint --format --c14n "$a") <(xmllint --format --c14n "$b"); then
+  if ! diff -sw --brief --label "$a" --label "$b" <(xmllint --format "$a") <(xmllint --format "$b"); then
     ALL_IDENTICAL=false
     FILE_STATUS+=("\u2716")
   else
