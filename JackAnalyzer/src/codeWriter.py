@@ -36,6 +36,10 @@ class CodeWriter():
       node = ET.SubElement(root, obj.label) if obj.label else root
       for child in obj.children:
         CodeWriter.construct_tree(node, child)
+
+      # This is done because the provided test files has empty tags extend to the next line, and I cannot figure out how to collapse them into a self closing tag.
+      if len(obj.children) == 0:
+        node.text = '\n'
     else:
       print(obj)
       raise Exception(f'CodeWriter does not recognize the type of provided object: {type(obj)}. [Token, GrammarObject] are supported')
@@ -44,4 +48,4 @@ class CodeWriter():
   @staticmethod
   def finish_and_export_xml(root: ET.Element, out_path) -> None:
     tree = ET.ElementTree(root)
-    tree.write(out_path, encoding='utf-8', xml_declaration=False)
+    tree.write(out_path, encoding='utf-8', xml_declaration=False, short_empty_elements=False)
