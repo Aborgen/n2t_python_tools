@@ -15,6 +15,10 @@ if __name__ == '__main__':
     sources = [source]
 
   root_dir = Path(source.stem)
+  for item in root_dir.iterdir():
+    item.unlink()
+
+  root_dir.rmdir()
   root_dir.mkdir()
   for child in sources:
     if child.suffix != '.jack':
