@@ -51,7 +51,7 @@ class Tokenizer():
             word = ''
 
           self._row = row + 1
-          line = line.rstrip('\n')
+          line = line.rstrip('\n').expandtabs(2)
           i = 0
           while i < len(line):
             char = line[i]
