@@ -12,15 +12,19 @@ from .src.tokenizer import Token, Tokenizer
 def JackAnalyzer(source: Path, out_path: Path, export_tokens: bool = False) -> None:
   tokenizer = Tokenizer(source)
   tokens = []
-  while not tokenizer.finished():
-    token = tokenizer.next()
-    if not token:
-      break
+  try:
+    while not tokenizer.finished():
+      token = tokenizer.next()
+      if not token:
+        break
 
-    tokens.append(token)
+      tokens.append(token)
 
-  parser = Parser(tokens, source, out_path, export_tokens)
-  obj = parser.parse()
+    parser = Parser(tokens, source, out_path, export_tokens)
+    obj = parser.parse()
+  except Exception as e:
+    raise Exception(f'File {source}\n' + str(e))
+
   if export_tokens:
     _export_xml_tokens(tokens, obj, out_path)
 
