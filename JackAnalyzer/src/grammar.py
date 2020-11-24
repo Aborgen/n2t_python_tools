@@ -289,7 +289,7 @@ class ClassVariable(GrammarObject):
       ]},
       Token(';', 'symbol')
     ]
-    super().__init__('varDec', keywords)
+    super().__init__('classVarDec', keywords)
 
 # ClassVariable*
 class ClassVariableList(GrammarObject):
