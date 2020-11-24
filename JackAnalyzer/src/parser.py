@@ -102,7 +102,7 @@ class Parser():
       elif token.value == 'return':
         statement = self._compile_return_statement()
       else:
-        raise ParserError()
+        raise ParserError('Unrecognized token {token.value}', token.line, token.word)
 
       repeat['optional-repeat'].append([ statement ])
       token = self._peek_token()

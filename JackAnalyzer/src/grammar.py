@@ -22,7 +22,7 @@ class GrammarObject():
 
   def deposit(self, obj: Union[Token, GrammarObject]) -> None:
     if self._ptr >= len(self._keywords):
-      raise 'Tried to deposit too many objects'
+      raise Exception('Tried to deposit too many objects')
 
     expected = self._expected()
     self._deposit(obj, expected)
@@ -31,7 +31,7 @@ class GrammarObject():
 
   def _deposit(self, obj: Union[Token, GrammarObject, dict], expected: Union[Token, GrammarObject, dict]) -> None:
     if not self._is_comparable(obj, expected):
-      raise ParserError('Token given does not match what is expected')
+      raise self._syntax_error(obj)
 
     if type(expected) == dict:
       key = list(expected.keys())[0]
@@ -55,26 +55,26 @@ class GrammarObject():
                 self._deposit(obj, v)
                 successful_deposit = True
                 break
-              except ParserError as e:
+              except Exception as e:
                 pass
 
           if not successful_deposit:
-            raise ParserError(f'Expected anything in {str(expected[key])}, but got {obj}')
+            raise self._syntax_error(obj)
         elif not any(obj == v or inspect.isclass(v) and isinstance(obj, v) for v in expected[key]):
-          raise ParserError(f'Not a correct option: {obj} not among {str(expected[key])}')
+          raise self._syntax_error(obj)
         else:
           self.children.append(obj)
       else:
-        raise ParserError(f'Unrecognized key: {key}')
+        raise self._syntax_error(obj)
     else:
       self.children.append(obj)
 
 
   def _deposit_group(self, group: list[Union[Token, GrammarObject, dict]], template: list[Union[Token, GrammarObject, dict]]) -> None:
     if type(group) != list or type(template) != list:
-      raise ParserError('Must be list')
+      raise Exception('Must be list')
     elif len(group) != len(template):
-      raise ParserError('Must be same length')
+      raise Exception('Must be same length')
 
     for a, b in zip(group, template):
       self._deposit(a, b)
@@ -85,7 +85,7 @@ class GrammarObject():
       return obj == expected
     elif type(expected) == dict:
       if not (len(expected) == 1):
-        raise 'Dict should only have one key'
+        raise Exception('Dict should only have one key')
       
       return True
     else:
@@ -94,9 +94,21 @@ class GrammarObject():
 
   def _expected(self) -> Union[Token, GrammarObject]:
     if self._ptr >= len(self._keywords):
-      raise ParserError()
+      raise Exception('Tried to look at current keyword when no more keywords remain')
 
     return self._keywords[self._ptr]
+
+
+  def _syntax_error(self, obj: Union[Token, GrammarObject, dict]) -> ParserError:
+    temp = obj
+    while type(temp) != Token:
+      if isinstance(obj, GrammarObject):
+        temp = obj.children[0]
+      elif type(obj) == dict:
+        temp = obj[list(obj.keys())[0]][0]
+
+    token = temp
+    return ParserError('There is a syntax error', token.line, token.word)
 
 
 # class Identifier { ClassVariableList SubroutineList }
@@ -259,9 +271,9 @@ class Identifier(GrammarObject):
 
   def deposit(self, obj: Token) -> None:
     if self._ptr >= len(self._keywords):
-      raise 'Tried to deposit too many objects'
+      raise Exception('Tried to deposit too many objects')
     elif type(obj) != Token or obj.token_type != 'identifier':
-      raise ParserError()
+      raise self._syntax_error(obj)
 
     self._keywords[0].value = obj.value
     super().deposit(obj)
@@ -364,7 +376,7 @@ class Term(GrammarObject):
 
   def deposit(self, obj: Union[Token, GrammarObject]) -> None:
     if self._ptr >= len(self._keywords):
-      raise 'Tried to deposit too many objects'
+      raise Exception('Tried to deposit too many objects')
 
     expected = self._expected()
     if type(obj) == Token and (obj.token_type == 'stringConstant' or obj.token_type == 'integerConstant'):
