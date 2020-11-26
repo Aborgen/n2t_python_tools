@@ -2,7 +2,7 @@ from __future__ import annotations # Needed to refer to GrammarObject within Gra
 
 import inspect
 from dataclasses import dataclass
-from typing import Union
+from typing import Optional, Union
 
 from .exceptions import ParserError
 from .tokenizer import Token
@@ -108,7 +108,7 @@ class GrammarObject():
         temp = obj[list(obj.keys())[0]][0]
 
     token = temp
-    return ParserError('There is a syntax error', token.line, token.word)
+    return ParserError(f'There is a syntax error: {token.value}', token.line, token.word)
 
 
 # class Identifier { ClassVariableList SubroutineList }
