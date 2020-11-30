@@ -141,7 +141,6 @@ class GrammarObjectMethods(unittest.TestCase):
     self.assertTrue(mock_syntax_error.called)
 
 
-  # TODO: Refine test names starting here
   def test__deposit__invokes__deposit_group__if_expected_is_dict_and_key_is_optional_and_value_length_is_greater_than_zero(self):
     obj = GrammarObject(label=None, keywords=[])
     mock_comparable = Mock(return_value=True)
@@ -208,7 +207,7 @@ class GrammarObjectMethods(unittest.TestCase):
     self.assertFalse(mock_deposit_group.called)
 
 
-  def test__deposit__recursively_invokes__deposit__with_given_object_and_every_child_value_if_expected_is_dict_and_key_is_any(self):
+  def test__deposit__does_not_raise_exception_if_expected_is_dict_and_key_is_any_and_given_object_matches(self):
     obj = GrammarObject(label=None, keywords=[])
     mock_comparable = Mock(return_value=True)
     mock_syntax_error = Mock(side_effect=Exception)
@@ -222,7 +221,7 @@ class GrammarObjectMethods(unittest.TestCase):
     self.assertFalse(mock_syntax_error.called)
 
 
-  def test__deposit__recursively_invokes__deposit__with_given_object_and_every_child_value_if_expected_is_dict_and_key_is_any_and_raises_exception_if_none_match(self):
+  def test__deposit__raises_exception_if_expected_is_dict_and_key_is_any_and_given_object_does_not_match(self):
     obj = GrammarObject(label=None, keywords=[])
     mock_comparable = Mock(return_value=True)
     mock_syntax_error = Mock(side_effect=Exception)
@@ -235,26 +234,3 @@ class GrammarObjectMethods(unittest.TestCase):
     self.assertTrue(mock_comparable.called)
     self.assertEqual(len(obj.children), 0)
     self.assertTrue(mock_syntax_error.called)
-    
-
-  def test__deposit__deposits_object_if_expected_is_dict_and_key_is_any_and_object_is_not_a_dict(self):
-    obj = GrammarObject(label=None, keywords=[])
-    mock_comparable = Mock(return_value=True)
-    mock_syntax_error = Mock(side_effect=Exception)
-    obj._is_comparable = mock_comparable
-    obj._syntax_error = mock_syntax_error
-
-    with self.assertRaises(Exception):
-      obj._deposit(MockToken('a'), {'any': [MockToken(1), {'group': [MockToken(2), MockToken(5)]}, 'hello']})
-
-    self.assertTrue(mock_comparable.called)
-    self.assertEqual(len(obj.children), 0)
-    self.assertTrue(mock_syntax_error.called)
-#    obj = GrammarObject(label=None, keywords=[])
-#    mock_deposit_group = Mock()
-#    mock_syntax_error = Mock()
-#    obj._deposit_group = mock_deposit_group
-#    obj._syntax_error = mock_syntax_error
-#
-#    self.assertTrue(mock_deposit_group.called)
-#    self.assertTrue(mock_syntax_error.called)
