@@ -5,15 +5,15 @@ import xml.etree.ElementTree as ET
 from .grammar import GrammarObject
 from .tokenizer import Token
 
-class CodeWriter():
+class XMLWriter():
   @staticmethod
   def export_tokens_as_xml(tokens: List[Token], out_path: Path) -> None:
     out_path = out_path.parent / f'{out_path.name}T.xml'
     root = ET.Element('tokens')
     for token in tokens:
-      CodeWriter.construct_tree(root, token)
+      XMLWriter.construct_tree(root, token)
 
-    CodeWriter.finish_and_export_xml(root, out_path)
+    XMLWriter.finish_and_export_xml(root, out_path)
     print(f'Successfully tokenized: {out_path}')
 
 
@@ -22,9 +22,9 @@ class CodeWriter():
     out_path = out_path.parent / f'{out_path.name}.xml'
     root = ET.Element(obj.label)
     for elem in obj.children:
-      CodeWriter.construct_tree(root, elem)
+      XMLWriter.construct_tree(root, elem)
 
-    CodeWriter.finish_and_export_xml(root, out_path)
+    XMLWriter.finish_and_export_xml(root, out_path)
     print(f'Successfully parsed grammar: {out_path}')
 
 
@@ -35,14 +35,14 @@ class CodeWriter():
     elif isinstance(obj, GrammarObject):
       node = ET.SubElement(root, obj.label) if obj.label else root
       for child in obj.children:
-        CodeWriter.construct_tree(node, child)
+        XMLWriter.construct_tree(node, child)
 
       # This is done because the provided test files has empty tags extend to the next line, and I cannot figure out how to collapse them into a self closing tag.
       if len(obj.children) == 0:
         node.text = '\n'
     else:
       print(obj)
-      raise Exception(f'CodeWriter does not recognize the type of provided object: {type(obj)}. [Token, GrammarObject] are supported')
+      raise Exception(f'XMLWriter does not recognize the type of provided object: {type(obj)}. [Token, GrammarObject] are supported')
 
 
   @staticmethod
