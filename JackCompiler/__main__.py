@@ -1,6 +1,6 @@
 import argparse
 from pathlib import Path
-from .main import JackAnalyzer
+from .main import JackCompiler
 
 if __name__ == '__main__':
   parser = argparse.ArgumentParser()
@@ -27,4 +27,4 @@ if __name__ == '__main__':
       continue
 
     out_path = root_dir / child.stem
-    JackAnalyzer(child, out_path, args.xml_tokens)
+    JackCompiler(child, out_path, args.xml_tokens)

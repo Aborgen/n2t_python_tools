@@ -1,9 +1,9 @@
 from pathlib import Path
-from typing import List, Union
+from typing import List, TextIO, Union
 import xml.etree.ElementTree as ET
 
-from .grammar import GrammarObject
-from .tokenizer import Token
+from .analyzer.grammar import GrammarObject
+from .analyzer.tokenizer import Token
 
 class XMLWriter():
   @staticmethod
@@ -49,3 +49,54 @@ class XMLWriter():
   def finish_and_export_xml(root: ET.Element, out_path) -> None:
     tree = ET.ElementTree(root)
     tree.write(out_path, encoding='utf-8', xml_declaration=False, short_empty_elements=False)
+
+#class VMWriter():
+#  _f          : TextIO
+#  _label_count: int
+#  closed      : bool
+#
+#  def __init__(self) -> None:
+#    self._f = None
+#    self._label_count = 0
+#    self.closed = True
+#
+#
+#  def open(self, out_file: Path) -> None:
+#    if not self.closed:
+#      raise Exception('Cannot open file: file already opened')
+#
+#    self._f = open(out_file, 'w+')
+#    self.closed = False
+#
+#
+#  def _write(self, l: str) -> None:
+#    self._f.write(l)
+#
+#
+#  def write_push(self, segment: ESegment, idx: int) -> None:
+#    l = self._write_push_or_pop('push', segment, idx)
+#    self._write(l)
+#
+#
+#  def write_pop(self, segment: ESegment, idx: int) -> None:
+#    l = self._write_push_or_pop('pop', segment, idx)
+#    self._write(l)
+#
+#
+#  def _write_push_or_pop(self, l: str, segment: ESegment, idx: int) -> str:
+#    if segment == ESegment.CONST:
+#      l += f' const {idx}'
+#    elif segment == ESegment.ARG:
+#      l += f' arg {idx}'
+#    elif segment == ESegment.LOCAL:
+#      l += f' local {idx}'
+#    elif segment == ESegment.STATIC:
+#      l += f' static {idx}'
+#    elif segment == ESegment.THIS:
+#      l += f' this {idx}'
+#    elif segment == ESegment.THAT:
+#      l += f' that {idx}'
+#    elif segment == ESegment.POINTER:
+#      l += f' pointer {idx}'
+#
+#    return l

@@ -4,7 +4,7 @@ import inspect
 from dataclasses import dataclass
 from typing import Optional, Union
 
-from .exceptions import ParserError
+from ..exceptions import ParserError
 from .tokenizer import Token
 
 class GrammarObject():

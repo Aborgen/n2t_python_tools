@@ -2,10 +2,10 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Generator, Optional
 
-from .categories import keywords, symbols
-from .categories import is_integer_constant, is_string_constant, is_identifier
-from .exceptions import TokenizerError
-from .utils import clean_string_constant
+from ..categories import keywords, symbols
+from ..categories import is_integer_constant, is_string_constant, is_identifier
+from ..exceptions import TokenizerError
+from ..utils import clean_string_constant
 
 @dataclass
 class Token():

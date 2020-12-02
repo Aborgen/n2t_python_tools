@@ -4,10 +4,10 @@ from pathlib import Path
 from typing import Union
 import xml.etree.cElementTree as ET
 
-from .src.codeWriter import XMLWriter
-from .src.grammar import GrammarObject
-from .src.parser import Parser
-from .src.tokenizer import Token, Tokenizer
+from ..codeWriter import XMLWriter
+from .grammar import GrammarObject
+from .parser import Parser
+from .tokenizer import Token, Tokenizer
 
 def JackAnalyzer(source: Path, out_path: Path, export_tokens: bool = False) -> None:
   tokenizer = Tokenizer(source)

@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import inspect
 
-from .categories import math_symbols
-from .exceptions import ParserError
+from ..categories import math_symbols
+from ..exceptions import ParserError
 from .grammar import AClass
 from .grammar import ClassVariable
 from .grammar import ClassVariableList
