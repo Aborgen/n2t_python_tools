@@ -20,6 +20,18 @@ class GrammarObject():
     self.label = label
 
 
+  def __iter__(self):
+    return iter(self.children)
+
+
+  def __len__(self):
+    return len(self.children)
+
+
+  def __getitem__(self, i: int):
+    return self.children[i]
+
+
   def deposit(self, obj: Union[Token, GrammarObject]) -> None:
     if self._ptr >= len(self._keywords):
       raise Exception('Tried to deposit too many objects')
@@ -233,6 +245,14 @@ class DataType(GrammarObject):
     ]
     super().__init__(None, keywords)
 
+
+  def deposit(self, obj: Token) -> None:
+    if type(obj) == Token or type(obj) == Identifier:
+      self.value = obj.value
+
+    super().deposit(obj)
+
+
 class SubroutineType(GrammarObject):
   def __init__(self) -> None:
     keywords = [
@@ -254,6 +274,13 @@ class ClassVariableType(GrammarObject):
     ]
     super().__init__(None, keywords)
 
+
+  def deposit(self, obj: Token) -> None:
+    if type(obj) == Token:
+      self.value = obj.value
+
+    super().deposit(obj)
+
 class SubroutineVariableType(GrammarObject):
   def __init__(self) -> None:
     keywords = [
@@ -262,6 +289,13 @@ class SubroutineVariableType(GrammarObject):
       ]}
     ]
     super().__init__(None, keywords)
+
+
+  def deposit(self, obj: Token) -> None:
+    if type(obj) == Token:
+      self.value = obj.value
+
+    super().deposit(obj)
 
 class Identifier(GrammarObject):
   def __init__(self) -> None:
@@ -276,6 +310,7 @@ class Identifier(GrammarObject):
       raise self._syntax_error(obj)
 
     self._keywords[0].value = obj.value
+    self.value = obj.value
     super().deposit(obj)
 
 # ClassVariableType DataType Identifier (, Identifier)*;
