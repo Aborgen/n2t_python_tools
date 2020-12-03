@@ -293,7 +293,7 @@ class SubroutineVariableType(GrammarObject):
 
   def deposit(self, obj: Token) -> None:
     if type(obj) == Token:
-      self.value = obj.value
+      self.value = 'local'
 
     super().deposit(obj)
 

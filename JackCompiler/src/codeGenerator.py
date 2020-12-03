@@ -75,30 +75,39 @@ class CodeGenerator():
     self._populate_class_symbols()
     for subroutine in self._subroutine_list:
       self._generate_subroutine_code(subroutine)
+      print('\n',self._subroutine_symbols,'\n')
 
 
   def _generate_subroutine_code(self, subroutine: Subroutine) -> None:
-    _, _, _, _, parameter_list, _, _ = subroutine
-    self._populate_subroutine_symbols(parameter_list)
+    _, _, _, _, parameter_list, _, subroutine_body = subroutine
+    variable_list = subroutine_body[1]
+    self._populate_subroutine_symbols(parameter_list, variable_list)
 
 
   def _populate_class_symbols(self) -> None:
     self._class_symbols.clear()
-    for var_type, data_type, *rest in self._variable_list:
-      identifiers = [l for l in rest if type(l) == Identifier]
-      for identifier in identifiers:
-        symbol = Symbol(name=identifier.value, type=data_type.value, kind=var_type.value)
-        self._class_symbols.append(symbol)
+    self._aggregate_variable_symbols(self._variable_list, self._class_symbols)
 
 
-  def _populate_subroutine_symbols(self, parameter_list: ParameterList) -> None:
+  def _populate_subroutine_symbols(self, parameter_list: ParameterList, variable_list: SubroutineVariableList) -> None:
     self._subroutine_symbols.clear()
     this = Identifier()
     l = [(self._class_name, Token('this', 'symbol'))]
     # ParameterList is structured like [data_type Identifier, data_type Identifier]. Skip the comma(if any).
     for i in range(0, len(parameter_list), 3):
       l.append((parameter_list[i], parameter_list[i+1]))
-
+    # Aggregate parameter symbols
     for data_type, identifier in l:
       symbol = Symbol(name=identifier.value, type=data_type.value, kind='argument')
       self._subroutine_symbols.append(symbol)
+
+    # Aggregate subroutine variable symbols
+    self._aggregate_variable_symbols(variable_list, self._subroutine_symbols)
+
+
+  def _aggregate_variable_symbols(self, variable_list: GrammarObject, container: SymbolTable) -> None:
+    for var_type, data_type, *rest in variable_list:
+      identifiers = [l for l in rest if type(l) == Identifier]
+      for identifier in identifiers:
+        symbol = Symbol(name=identifier.value, type=data_type.value, kind=var_type.value)
+        container.append(symbol)
