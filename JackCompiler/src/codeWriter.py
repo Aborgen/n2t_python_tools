@@ -50,53 +50,75 @@ class XMLWriter():
     tree = ET.ElementTree(root)
     tree.write(out_path, encoding='utf-8', xml_declaration=False, short_empty_elements=False)
 
-#class VMWriter():
-#  _f          : TextIO
-#  _label_count: int
-#  closed      : bool
-#
-#  def __init__(self) -> None:
-#    self._f = None
-#    self._label_count = 0
-#    self.closed = True
-#
-#
-#  def open(self, out_file: Path) -> None:
-#    if not self.closed:
-#      raise Exception('Cannot open file: file already opened')
-#
-#    self._f = open(out_file, 'w+')
-#    self.closed = False
-#
-#
-#  def _write(self, l: str) -> None:
-#    self._f.write(l)
-#
-#
-#  def write_push(self, segment: ESegment, idx: int) -> None:
-#    l = self._write_push_or_pop('push', segment, idx)
-#    self._write(l)
-#
-#
-#  def write_pop(self, segment: ESegment, idx: int) -> None:
-#    l = self._write_push_or_pop('pop', segment, idx)
-#    self._write(l)
-#
-#
-#  def _write_push_or_pop(self, l: str, segment: ESegment, idx: int) -> str:
-#    if segment == ESegment.CONST:
-#      l += f' const {idx}'
-#    elif segment == ESegment.ARG:
-#      l += f' arg {idx}'
-#    elif segment == ESegment.LOCAL:
-#      l += f' local {idx}'
-#    elif segment == ESegment.STATIC:
-#      l += f' static {idx}'
-#    elif segment == ESegment.THIS:
-#      l += f' this {idx}'
-#    elif segment == ESegment.THAT:
-#      l += f' that {idx}'
-#    elif segment == ESegment.POINTER:
-#      l += f' pointer {idx}'
-#
-#    return l
+class VMWriter():
+  _f          : TextIO
+  _filenameo  : str
+  _label_count: int
+  closed      : bool
+
+  def __init__(self) -> None:
+    self._f = None
+    self._filename = None
+    self._label_count = 0
+    self.closed = True
+
+
+  def open(self, out_path: Path) -> None:
+    if not self.closed:
+      raise Exception('Cannot open file: file already opened')
+
+    out_path = out_path.with_suffix('.vm')
+    self._filename = out_path.stem
+    self._f = open(out_path, 'w+')
+    self.closed = False
+
+
+  def write_push(self, segment: str, idx: int) -> None:
+    self._write(f'push {segment} {idx}')
+
+
+  def write_pop(self, segment: str, idx: int) -> None:
+    self._write(f'pop {segment} {idx}')
+
+
+  def write_arithmetic(self, operator: str) -> None:
+    if operator == '+':
+      s = 'add'
+    elif operator == '-':
+      s = 'sub'
+    elif operator == '<':
+      s = 'lt'
+    elif operator == '=':
+      s = 'eq'
+    elif operator == '>':
+      s = 'gt'
+    elif operator == '~':
+      s = 'neg'
+    elif operator == '*':
+      self.write_subroutine_call('Math.multiply', 2)
+      return
+    elif operator == '/':
+      self.write_subroutine_call('Math.divide', 2)
+      return
+    else:
+#      raise CompilerException(f'Unknown operator: {operator}')
+      raise Exception(f'Unknown operator: {operator}')
+
+    self._write(s)
+
+
+  def write_function(self, name: str, variable_count: int) -> None:
+    self._write(f'function {name} {variable_count}')
+
+
+  def write_subroutine_call(self, method: str, argument_count: int) -> None:
+    self._write(f'call {method} {argument_count}')
+
+
+  def write_return(self) -> None:
+    self._write('return')
+
+
+  def _write(self, s: str) -> None:
+    self._f.write(s)
+    self._f.write('\n')

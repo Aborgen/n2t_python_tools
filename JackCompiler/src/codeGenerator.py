@@ -2,13 +2,19 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
+from .analyzer.grammar import ClassVariableList
+from .analyzer.grammar import Expression
+from .analyzer.grammar import ExpressionList
 from .analyzer.grammar import GrammarObject
 from .analyzer.grammar import Identifier
 from .analyzer.grammar import ParameterList
 from .analyzer.grammar import Subroutine
 from .analyzer.grammar import SubroutineList
-from .analyzer.grammar import ClassVariableList
+from .analyzer.grammar import Term
+from .analyzer.grammar import doStatement
+from .analyzer.grammar import returnStatement
 from .analyzer.tokenizer import Token
+from .codeWriter import VMWriter
 
 @dataclass
 class Symbol():
@@ -29,8 +35,17 @@ class SymbolTable():
   def __getitem__(self, i: int) -> Symbol:
     return self._data[i]
 
-  def __str__(self) -> None:
+
+  def __str__(self) -> str:
     return str(self._data)
+
+
+  def __len__(self) -> int:
+    return len(self._data)
+
+
+  def __contains__(self, name: str) -> bool:
+    return any(symbol.name == name for symbol in self._data)
 
 
   def append(self, symbol: Symbol) -> None:
@@ -57,8 +72,9 @@ class CodeGenerator():
   _subroutine_list   : SubroutineList
   _subroutine_symbols: SymbolTable
   _variable_list     : ClassVariableList
+  _writer            : VMWriter
 
-  def __init__(self, obj: GrammarObject) -> None:
+  def __init__(self, obj: GrammarObject, writer: VMWriter) -> None:
     if not isinstance(obj, GrammarObject) or obj.label != 'class':
 #      raise CompilerException('Malformed object tree')
       raise Exception('Malformed object tree')
@@ -69,19 +85,116 @@ class CodeGenerator():
     self._variable_list = variable_list
     self._class_symbols = SymbolTable()
     self._subroutine_symbols = SymbolTable()
+    self._writer = writer
 
 
   def generate(self) -> tuple:
     self._populate_class_symbols()
     for subroutine in self._subroutine_list:
       self._generate_subroutine_code(subroutine)
-      print('\n',self._subroutine_symbols,'\n')
 
 
   def _generate_subroutine_code(self, subroutine: Subroutine) -> None:
-    _, _, _, _, parameter_list, _, subroutine_body = subroutine
-    variable_list = subroutine_body[1]
-    self._populate_subroutine_symbols(parameter_list, variable_list)
+    function_kind, _, subroutine_name, _, parameter_list, _, subroutine_body = subroutine
+    _, variable_list, statement_list, _ = subroutine_body
+    self._populate_subroutine_symbols(parameter_list, variable_list, function_kind)
+
+    self._writer.write_function(f'{self._class_name.value}.{subroutine_name.value}', variable_count=len(self._subroutine_symbols))
+    for statement in statement_list:
+      if type(statement) == doStatement:
+        subroutine_call = statement[1]
+        self._generate_for_subroutine_call(subroutine_call)
+        self._writer.write_pop('temp', 0)
+        self._writer.write_push('constant', 0)
+      elif type(statement) == returnStatement:
+        self._writer.write_return()
+      else:
+        raise NotImplementedError
+
+
+  def _generate_for_expression(self, expression: Expression) -> None:
+#    # One Term
+#    if len(expression) == 1 and len(expression[0]) == 1:             # Ignoring Terms in shape of ( Expression ) and [ Expression ] for now
+#      obj = expression[0][0]
+#      if type(obj) == Token and obj.token_type == 'integerConstant': # Unsure what to do about stringConstants
+#        self._writer.write_push('constant', obj.value)
+#      elif type(obj) == Identifier:
+#        symbol = self._fetch_symbol(obj.value)
+#        self._writer.write_push(symbol.kind, symbol.id)
+#    # Two or more Terms, separated by operators
+#    elif len(expression) % 3 == 0:
+#      term_list = []
+#      operator_stack = []
+#      for i in range(0, len(expression), 3):
+#        term1 = expression[i]
+#        op = expression[i + 1]
+#        term2 = expression[i + 2]
+#        term_list.append(term1)
+#        term_list.append(term2)
+#        operator_stack.append(op)
+
+    term_list = []
+    operator_stack = []
+    # Terms are first written FIFO, and operations are written LIFO afterwards
+    for i, value in enumerate(expression):
+      # Term
+      if i % 2 == 0:
+        term_list.append(value)
+      # Operator
+      else:
+        operator_stack.append(value)
+
+
+    for term in term_list:
+      self._generate_for_term(term)
+
+    while len(operator_stack) > 0:
+      operator = operator_stack.pop()
+      self._writer.write_arithmetic(operator.value)
+
+
+  def _generate_for_term(self, term: Term) -> None:
+    if type(term) != Term:
+      raise Exception(f'Not a term: {term}')
+
+    if len(term) == 1:
+      obj = term[0]
+      if type(obj) == Token:
+        self._writer.write_push('constant', obj.value)
+      elif type(obj) == Identifier:
+        symbol = self._fetch_symbol(obj.value)
+        self._writer.write_push(symbol.kind, symbol.id)
+      elif type(obj) == SubroutineCall:
+        self._generate_for_subroutine_call(obj)
+    # operator Term
+    elif len(term) == 2:
+      operator, term1 = term
+      self._generate_for_term(term1)
+      self._writer.write_arithmetic(operator)
+    # Term operator Term
+    elif len(term) == 3:
+      _, expression, _ = term
+      self._generate_for_expression(expression)
+
+  def _generate_for_subroutine_call(self, subroutine_call: SubroutineCall) -> None:
+    # Specification states that Subroutines can either be single identifiers, or identifier.identifier, as in the invocation of a class method. Doing it this way allows for future extension to arbitrarily long identifier chains.
+    identifiers = []
+    expression_list = None
+    for obj in subroutine_call:
+      if type(obj) == Identifier:
+        identifiers.append(obj.value)
+      # SubroutineCalls are guaranteed to have an ExpressionList. It could be an empty one.
+      elif type(obj) == ExpressionList:
+        expression_list = obj
+        break
+
+    # Filter comma Tokens.
+    expressions = [l for l in expression_list if type(l) == Expression]
+    for expression in expressions:
+      self._generate_for_expression(expression)
+
+    method = '.'.join(identifiers)
+    self._writer.write_subroutine_call(method, len(expressions))
 
 
   def _populate_class_symbols(self) -> None:
@@ -89,10 +202,13 @@ class CodeGenerator():
     self._aggregate_variable_symbols(self._variable_list, self._class_symbols)
 
 
-  def _populate_subroutine_symbols(self, parameter_list: ParameterList, variable_list: SubroutineVariableList) -> None:
+  def _populate_subroutine_symbols(self, parameter_list: ParameterList, variable_list: SubroutineVariableList, function_kind: Token) -> None:
     self._subroutine_symbols.clear()
     this = Identifier()
-    l = [(self._class_name, Token('this', 'symbol'))]
+    l = []
+    if function_kind.value == 'method':
+      l.append((self._class_name, Token('this', 'symbol')))
+
     # ParameterList is structured like [data_type Identifier, data_type Identifier]. Skip the comma(if any).
     for i in range(0, len(parameter_list), 3):
       l.append((parameter_list[i], parameter_list[i+1]))
@@ -111,3 +227,13 @@ class CodeGenerator():
       for identifier in identifiers:
         symbol = Symbol(name=identifier.value, type=data_type.value, kind=var_type.value)
         container.append(symbol)
+
+
+  def _fetch_symbol(self, name: str) -> Symbol:
+    if name in self._subroutine_symbols:
+      return self._subroutine_symbols[name]
+    elif name in self._class_symbols:
+      return self._class_symbols[name]
+    else:
+#      raise CompilerException('Tried to use variable that has not been declared', obj.line, obj.word)
+      raise Exception(f'Tried to use variable that has not been declared at {obj.line}, {obj.word}')

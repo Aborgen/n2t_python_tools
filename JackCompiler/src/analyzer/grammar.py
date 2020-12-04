@@ -21,7 +21,7 @@ class GrammarObject():
 
 
   def __iter__(self):
-    return iter(self.children)
+    yield from self.children
 
 
   def __len__(self):
@@ -263,6 +263,13 @@ class SubroutineType(GrammarObject):
       ]}
     ]
     super().__init__(None, keywords)
+
+
+  def deposit(self, obj: Token) -> None:
+    if type(obj) == Token:
+      self.value = obj.value
+
+    super().deposit(obj)
 
 class ClassVariableType(GrammarObject):
   def __init__(self) -> None:
