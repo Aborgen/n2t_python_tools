@@ -9,10 +9,14 @@ from .analyzer.grammar import GrammarObject
 from .analyzer.grammar import Identifier
 from .analyzer.grammar import ParameterList
 from .analyzer.grammar import Subroutine
+from .analyzer.grammar import SubroutineCall
 from .analyzer.grammar import SubroutineList
 from .analyzer.grammar import Term
 from .analyzer.grammar import doStatement
+from .analyzer.grammar import ifStatement
+from .analyzer.grammar import letStatement
 from .analyzer.grammar import returnStatement
+from .analyzer.grammar import whileStatement
 from .analyzer.tokenizer import Token
 from .codeWriter import VMWriter
 
@@ -24,16 +28,16 @@ class Symbol():
   id  : int = -1
 
 class SymbolTable():
-  _data       : list[Symbol]
+  _data       : dict[str, Symbol]
   _kind_counts: dict[str, int]
 
   def __init__(self) -> None:
-    self._data = []
+    self._data = {}
     self._kind_counts = {}
 
 
-  def __getitem__(self, i: int) -> Symbol:
-    return self._data[i]
+  def __getitem__(self, key: str) -> Symbol:
+    return self._data[key]
 
 
   def __str__(self) -> str:
@@ -45,20 +49,21 @@ class SymbolTable():
 
 
   def __contains__(self, name: str) -> bool:
-    return any(symbol.name == name for symbol in self._data)
+    return name in self._data
 
 
-  def append(self, symbol: Symbol) -> None:
+  def insert(self, symbol: Symbol) -> None:
     if not isinstance(symbol, Symbol):
-      raise Exception('Can only append Symbol objects. Received: {symbol}')
+      raise Exception('Can only insert Symbol objects. Received: {symbol}')
   
-    if symbol.kind in self._kind_counts:
-      self._kind_counts[symbol.kind] += 1
-    else:
-      self._kind_counts[symbol.kind] = 0
+    if symbol.name not in self._data:
+      if symbol.kind in self._kind_counts:
+        self._kind_counts[symbol.kind] += 1
+      else:
+        self._kind_counts[symbol.kind] = 0
 
     symbol.id = self._kind_counts[symbol.kind]
-    self._data.append(symbol)
+    self._data[symbol.name] = symbol
 
 
   def clear(self) -> None:
@@ -97,42 +102,117 @@ class CodeGenerator():
   def _generate_subroutine_code(self, subroutine: Subroutine) -> None:
     function_kind, _, subroutine_name, _, parameter_list, _, subroutine_body = subroutine
     _, variable_list, statement_list, _ = subroutine_body
-    self._populate_subroutine_symbols(parameter_list, variable_list, function_kind)
+    arg_count, local_count = self._populate_subroutine_symbols(parameter_list, variable_list, function_kind)
 
-    self._writer.write_function(f'{self._class_name.value}.{subroutine_name.value}', variable_count=len(self._subroutine_symbols))
+    self._writer.write_function(f'{self._class_name.value}.{subroutine_name.value}', variable_count=local_count)
+    self._generate_for_statements(statement_list)
+
+
+  def _generate_for_statements(self, statement_list: StatementList) -> None:
     for statement in statement_list:
       if type(statement) == doStatement:
-        subroutine_call = statement[1]
-        self._generate_for_subroutine_call(subroutine_call)
-        self._writer.write_pop('temp', 0)
-        self._writer.write_push('constant', 0)
+        self._generate_for_do(statement)
+      elif type(statement) == letStatement:
+        self._generate_for_let(statement)
+      elif type(statement) == ifStatement:
+        self._generate_for_if(statement)
       elif type(statement) == returnStatement:
-        self._writer.write_return()
+        self._generate_for_return(statement)
+      elif type(statement) == whileStatement:
+        self._generate_for_while(statement)
       else:
         raise NotImplementedError
 
 
-  def _generate_for_expression(self, expression: Expression) -> None:
-#    # One Term
-#    if len(expression) == 1 and len(expression[0]) == 1:             # Ignoring Terms in shape of ( Expression ) and [ Expression ] for now
-#      obj = expression[0][0]
-#      if type(obj) == Token and obj.token_type == 'integerConstant': # Unsure what to do about stringConstants
-#        self._writer.write_push('constant', obj.value)
-#      elif type(obj) == Identifier:
-#        symbol = self._fetch_symbol(obj.value)
-#        self._writer.write_push(symbol.kind, symbol.id)
-#    # Two or more Terms, separated by operators
-#    elif len(expression) % 3 == 0:
-#      term_list = []
-#      operator_stack = []
-#      for i in range(0, len(expression), 3):
-#        term1 = expression[i]
-#        op = expression[i + 1]
-#        term2 = expression[i + 2]
-#        term_list.append(term1)
-#        term_list.append(term2)
-#        operator_stack.append(op)
+  def _generate_for_do(self, statement: doStatement) -> None:
+    '''
+    [compile subroutine call]
+    pop temp 0
+    push constant 0
+    '''
+    subroutine_name = statement[1]
+    self._generate_for_subroutine_call(subroutine_name)
+    # These two lines are necessary when compiling a do statement: do statements implicitly throw away the return value thats on the top of the stack,
+    # and puts a dummy value in its place. According to the spec, all subroutines must return a value.
+    self._writer.write_pop('temp', 0)
+    self._writer.write_push('constant', 0)
 
+
+  # let var = expression;  :: First generate for expression on RHS. Then, pop to var.
+  # TODO: Extend for array access.
+  def _generate_for_let(self, statement: letStatement) -> None:
+    '''
+    [compile expression]
+    pop this n
+    '''
+    _, var, _, expression, _ = statement
+    self._generate_for_expression(expression)
+    symbol = self._fetch_symbol(var)
+    self._writer.write_pop(symbol.kind, symbol.id)
+
+
+  def _generate_for_if(self, statement: ifStatement) -> None:
+    '''
+    [compile expression]
+    neg
+    if-goto L1
+    [compile statements_if]
+    goto L2
+    label L1
+    [compile statements_else]
+    label L2
+    '''
+    # if ( expression ) { statements }
+    _, _, expression, _, _, statements_if, _ = statement[:7]
+    # We negate the result from compiling the expression, because the resulting code is cleaner.
+    self._generate_for_expression(expression)
+    self._writer.write_logic('~')
+    # if expression is false, goto statements_else
+    label1 = self._writer.write_goto(prefix='if')
+    self._generate_for_statements(statements_if)
+    label2 = self._writer.write_goto()
+    self._writer.write_label(label1)
+    statements_else = statement[9] if len(statement) > 7 else []
+    self._generate_for_statements(statements_else)
+    self._writer.write_label(label2)
+
+
+  # return (expression)?;
+  # TODO: Extend for possible expression
+  def _generate_for_return(self, statement: returnStatement) -> None:
+    if len(statement) > 2:
+      self._generate_for_expression(statement[1])
+    else:
+      self._writer.write_push('constant', 0)
+
+    self._writer.write_return()
+
+
+  def _generate_for_while(self, statement: whileStatement) -> None:
+    '''
+    label L1
+    [compile expression]
+    neg
+    if-goto L2
+    [compile statement_list]
+    goto L1
+    label L2
+    '''
+    _, _, expression, _, _, statement_list, _ = statement
+    label1 = self._writer.write_label()
+    self._generate_for_expression(expression)
+    self._writer.write_logic('~')
+    label2 = self._writer.write_goto(prefix='if')
+    self._generate_for_statements(statement_list)
+    self._writer.write_goto(label1)
+    self._writer.write_label(label2)
+
+
+  def _generate_for_expression(self, expression: Expression) -> None:
+    '''
+    [compile term+]
+    [compile operation*]
+    '''
     term_list = []
     operator_stack = []
     # Terms are first written FIFO, and operations are written LIFO afterwards
@@ -150,19 +230,34 @@ class CodeGenerator():
 
     while len(operator_stack) > 0:
       operator = operator_stack.pop()
-      self._writer.write_arithmetic(operator.value)
+      if operator.value in ['&', '|']:
+        self._writer.write_logic(operator.value)
+      else:
+        self._writer.write_arithmetic(operator.value)
 
 
   def _generate_for_term(self, term: Term) -> None:
+    '''
+    (push constant n) | (push segment n) | [compile subroutine call] | [compile term] | [compile expression]
+                                                                     | operator
+    '''
     if type(term) != Term:
       raise Exception(f'Not a term: {term}')
 
     if len(term) == 1:
       obj = term[0]
       if type(obj) == Token:
-        self._writer.write_push('constant', obj.value)
+        if obj.value in ['true', 'false', 'null']:
+          n = '0'
+        else:
+          n = obj.value
+
+        self._writer.write_push('constant', n)
+        # -1 == true according to specification
+        if obj.value == 'true':
+          self._writer.write_logic('~')
       elif type(obj) == Identifier:
-        symbol = self._fetch_symbol(obj.value)
+        symbol = self._fetch_symbol(obj)
         self._writer.write_push(symbol.kind, symbol.id)
       elif type(obj) == SubroutineCall:
         self._generate_for_subroutine_call(obj)
@@ -170,13 +265,21 @@ class CodeGenerator():
     elif len(term) == 2:
       operator, term1 = term
       self._generate_for_term(term1)
-      self._writer.write_arithmetic(operator)
+      self._writer.write_logic(operator.value)
     # Term operator Term
     elif len(term) == 3:
       _, expression, _ = term
       self._generate_for_expression(expression)
+    else:
+      raise Exception('Encountered empty Term GrammarObject')
 
+
+  # f(exp1, exp2, ..., expn)
   def _generate_for_subroutine_call(self, subroutine_call: SubroutineCall) -> None:
+    '''
+    [[ for expression in args [compile expression] ]]
+    function name n
+    '''
     # Specification states that Subroutines can either be single identifiers, or identifier.identifier, as in the invocation of a class method. Doing it this way allows for future extension to arbitrarily long identifier chains.
     identifiers = []
     expression_list = None
@@ -215,25 +318,34 @@ class CodeGenerator():
     # Aggregate parameter symbols
     for data_type, identifier in l:
       symbol = Symbol(name=identifier.value, type=data_type.value, kind='argument')
-      self._subroutine_symbols.append(symbol)
+      self._subroutine_symbols.insert(symbol)
 
-    # Aggregate subroutine variable symbols
-    self._aggregate_variable_symbols(variable_list, self._subroutine_symbols)
+    arg_count = len(l)
+    local_count = self._aggregate_variable_symbols(variable_list, self._subroutine_symbols)
+    return (arg_count, local_count)
 
 
-  def _aggregate_variable_symbols(self, variable_list: GrammarObject, container: SymbolTable) -> None:
+  def _aggregate_variable_symbols(self, variable_list: GrammarObject, container: SymbolTable) -> int:
+    var_count = 0
     for var_type, data_type, *rest in variable_list:
       identifiers = [l for l in rest if type(l) == Identifier]
       for identifier in identifiers:
         symbol = Symbol(name=identifier.value, type=data_type.value, kind=var_type.value)
-        container.append(symbol)
+        container.insert(symbol)
+        var_count += 1
 
+    return var_count
 
-  def _fetch_symbol(self, name: str) -> Symbol:
-    if name in self._subroutine_symbols:
-      return self._subroutine_symbols[name]
-    elif name in self._class_symbols:
-      return self._class_symbols[name]
+  # First check to see if a symbol with the name exists in the subroutine-level symbols, then the class-level symbols.
+  def _fetch_symbol(self, identifier: Identifier) -> Symbol:
+    if type(identifier) != Identifier:
+      raise Exception(f'Must pass identifier. Received \'{type(identifier)}\'')
+
+    token = identifier[0]
+    if token.value in self._subroutine_symbols:
+      return self._subroutine_symbols[token.value]
+    elif token.value in self._class_symbols:
+      return self._class_symbols[token.value]
     else:
 #      raise CompilerException('Tried to use variable that has not been declared', obj.line, obj.word)
-      raise Exception(f'Tried to use variable that has not been declared at {obj.line}, {obj.word}')
+      raise Exception(f'Tried to use variable that has not been declared at {token.line}, {token.word}')

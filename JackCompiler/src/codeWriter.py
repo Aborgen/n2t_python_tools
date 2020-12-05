@@ -92,14 +92,28 @@ class VMWriter():
       s = 'eq'
     elif operator == '>':
       s = 'gt'
-    elif operator == '~':
-      s = 'neg'
     elif operator == '*':
       self.write_subroutine_call('Math.multiply', 2)
       return
     elif operator == '/':
       self.write_subroutine_call('Math.divide', 2)
       return
+    else:
+#      raise CompilerException(f'Unknown operator: {operator}')
+      raise Exception(f'Unknown operator: {operator}')
+
+    self._write(s)
+
+
+  def write_logic(self, operator: str) -> None:
+    if operator == '&':
+      s = 'and'
+    elif operator == '|':
+      s = 'or'
+    elif operator == '-':
+      s = 'neg'
+    elif operator == '~':
+      s = 'not'
     else:
 #      raise CompilerException(f'Unknown operator: {operator}')
       raise Exception(f'Unknown operator: {operator}')
@@ -118,6 +132,32 @@ class VMWriter():
   def write_return(self) -> None:
     self._write('return')
 
+
+  def write_label(self, label: str = None) -> str:
+    if not label:
+      label = self._generate_new_label()
+
+    self._write(f'label {label}')
+    return label
+
+
+  def write_goto(self, label: str = None, prefix: str = None) -> str:
+    if not label:
+      label = self._generate_new_label()
+
+    if prefix:
+      goto = f'{prefix}-goto'
+    else:
+      goto = 'goto'
+
+    self._write(f'{goto} {label}')
+    return label
+
+
+  def _generate_new_label(self) -> str:
+    label = f'L{self._label_count}'
+    self._label_count += 1
+    return label
 
   def _write(self, s: str) -> None:
     self._f.write(s)
