@@ -344,6 +344,15 @@ class CodeGenerator():
 
     return var_count
 
+
+  def _symbol_exists(self, identifier: Identifier) -> bool:
+    if type(identifier) != Identifier:
+      raise Exception(f'Must pass identifier. Received \'{type(identifier)}\'')
+
+    token = identifier[0]
+    return token.value in self._subroutine_symbols or token.value in self._class_symbols
+
+
   # First check to see if a symbol with the name exists in the subroutine-level symbols, then the class-level symbols.
   def _fetch_symbol(self, identifier: Identifier) -> Symbol:
     if type(identifier) != Identifier:
