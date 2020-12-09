@@ -249,7 +249,10 @@ class CodeGenerator():
     if len(term) == 1:
       obj = term[0]
       if type(obj) == Token:
-        if obj.value in ['true', 'false', 'null']:
+        if obj.value == 'this':
+          self._writer.write_push('pointer', 0)
+          return
+        elif obj.value in ['true', 'false', 'null']:
           n = '0'
         else:
           n = obj.value
