@@ -137,10 +137,8 @@ class CodeGenerator():
     '''
     subroutine_name = statement[1]
     self._generate_for_subroutine_call(subroutine_name)
-    # These two lines are necessary when compiling a do statement: do statements implicitly throw away the return value thats on the top of the stack,
-    # and puts a dummy value in its place. According to the spec, all subroutines must return a value.
+    # do statements implicitly throw away the return value thats on the top of the stack.
     self._writer.write_pop('temp', 0)
-    self._writer.write_push('constant', 0)
 
 
   # let var = expression;  :: First generate for expression on RHS. Then, pop to var.
@@ -183,7 +181,6 @@ class CodeGenerator():
 
 
   # return (expression)?;
-  # TODO: Extend for possible expression
   def _generate_for_return(self, statement: returnStatement) -> None:
     if len(statement) > 2:
       self._generate_for_expression(statement[1])
