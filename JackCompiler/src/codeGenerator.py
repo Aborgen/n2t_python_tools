@@ -323,7 +323,7 @@ class CodeGenerator():
     expression_list = None
     for obj in subroutine_call:
       if type(obj) == Identifier:
-        identifiers.append(obj.value)
+        identifiers.append(obj)
       # SubroutineCalls are guaranteed to have an ExpressionList. It could be an empty one.
       elif type(obj) == ExpressionList:
         expression_list = obj
@@ -334,8 +334,25 @@ class CodeGenerator():
     for expression in expressions:
       self._generate_for_expression(expression)
 
-    method = '.'.join(identifiers)
-    self._writer.write_subroutine_call(method, len(expressions))
+    arguments = len(expressions)
+    # Method of current class
+    if len(identifiers) == 1:
+      identifiers.append(identifiers[0])
+      identifiers[0] = self._class_name
+      self._writer.write_push('pointer', 0)
+      arguments += 1
+    # Method of instantiated class
+    elif self._symbol_exists(identifiers[0]):
+      symbol = self._fetch_symbol(identifiers[0])
+      self._writer.write_push(symbol.kind, symbol.id)
+      identifiers[0].value = symbol.type
+      arguments += 1
+    # Function / constructor / Static(?)
+    else:
+      pass
+
+    method = '.'.join(identifier.value for identifier in identifiers
+    self._writer.write_subroutine_call(method, arguments)
 
 
   def _populate_class_symbols(self) -> None:
