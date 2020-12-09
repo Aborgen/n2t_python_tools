@@ -110,7 +110,40 @@ class CodeGenerator():
     arg_count, local_count = self._populate_subroutine_symbols(parameter_list, variable_list, function_kind)
 
     self._writer.write_function(f'{self._class_name.value}.{subroutine_name.value}', variable_count=local_count)
+    if function_kind.value == 'constructor':
+      self._generate_for_constructor()
+    elif function_kind.value == 'method':
+      self._generate_for_method_memory_setup()
+
     self._generate_for_statements(statement_list)
+
+
+  # Need to set aside block of memory for newly instantiated object
+  def _generate_for_constructor(self) -> None:
+    '''
+    push constant arg_count
+    call Memory.alloc 1
+    pop pointer 0 # sets THIS segment to the base address of the newly constructed object
+    '''
+    field_count = 0
+    for symbol in self._class_symbols:
+      if symbol.kind != 'static':
+        field_count += 1
+
+    if field_count > 0:
+      self._writer.write_push('constant', field_count)
+      self._writer.write_subroutine_call('Memory.alloc', 1)
+      self._writer.write_pop('pointer', 0)
+
+
+  # Sets THIS segment to point to base address of object in methods
+  def _generate_for_method_memory_setup(self) -> None:
+    '''
+    push argument 0 # arg0 is always base address of object
+    pop pointer 0
+    '''
+    self._writer.write_push('argument', 0)
+    self._writer.write_pop('pointer', 0)
 
 
   def _generate_for_statements(self, statement_list: StatementList) -> None:
