@@ -308,16 +308,19 @@ class CodeGenerator():
   def _populate_class_symbols(self) -> None:
     self._class_symbols.clear()
     self._aggregate_variable_symbols(self._variable_list, self._class_symbols)
+    for symbol in self._class_symbols:
+      if symbol.kind == 'field':
+        symbol.kind = 'this'
 
 
   def _populate_subroutine_symbols(self, parameter_list: ParameterList, variable_list: SubroutineVariableList, function_kind: Token) -> None:
     self._subroutine_symbols.clear()
-    this = Identifier()
-    l = []
     if function_kind.value == 'method':
-      l.append((self._class_name, Token('this', 'symbol')))
+      symbol = Symbol(name='this', type=self._class_name, kind='argument')
+      self._subroutine_symbols.insert(symbol)
 
     # ParameterList is structured like [data_type Identifier, data_type Identifier]. Skip the comma(if any).
+    l = []
     for i in range(0, len(parameter_list), 3):
       l.append((parameter_list[i], parameter_list[i+1]))
     # Aggregate parameter symbols
