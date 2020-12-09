@@ -52,6 +52,11 @@ class SymbolTable():
     return name in self._data
 
 
+  def __iter__(self) -> Symbol:
+    values = self._data.values()
+    yield from values
+
+
   def insert(self, symbol: Symbol) -> None:
     if not isinstance(symbol, Symbol):
       raise Exception('Can only insert Symbol objects. Received: {symbol}')
