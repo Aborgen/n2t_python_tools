@@ -12,5 +12,12 @@ The Assembler takes Hack assembly source files and converts them into a series o
 Usage:  ```python3 -m VMTranslator [source] [OPTIONAL]-o [output]```\
 Output: \[source].asm or \[output]
 
-The VMTranslator takes Jack virtual machine code and outputs it into Hack assembly language.
+The VMTranslator takes Jack virtual machine code and outputs it into Hack assembly language. Source can be a single .vm file, or a directory.
+
+**JackCompiler**\
+Usage:  ```python3 -m JackCompiler [source]```\
+Output: \[source].vm or \[compiled directory]
+
+The JackCompiler is stage one of the Jack two-tier compiler, and it compiles jack files into Jack virtual machine code. Source can be a single .jack file, or a directory.
+
 
