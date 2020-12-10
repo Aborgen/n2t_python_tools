@@ -345,30 +345,28 @@ class CodeGenerator():
         expression_list = obj
         break
 
-    # Filter comma Tokens.
-    expressions = [l for l in expression_list if type(l) == Expression]
-    for expression in expressions:
-      self._generate_for_expression(expression)
-
-    arguments = len(expressions)
-    # Method of current class
-    if len(identifiers) == 1:
-      identifiers.append(identifiers[0])
-      identifiers[0] = self._class_name
-      self._writer.write_push('pointer', 0)
-      arguments += 1
-    # Method of instantiated class
-    elif self._symbol_exists(identifiers[0]):
+    argument_count = 0
+    # Method of instantiated object. First argument must be the object itself.
+    if len(identifiers) > 1 and self._symbol_exists(identifiers[0]):
       symbol = self._fetch_symbol(identifiers[0])
       self._push_symbol(symbol)
       identifiers[0].value = symbol.type
-      arguments += 1
-    # Function / constructor / Static(?)
-    else:
-      pass
+      argument_count += 1
+    # Method of current class. Must set frame to this (pointer 0) before calling the method.
+    elif len(identifiers) == 1:
+      identifiers.append(identifiers[0])
+      identifiers[0] = self._class_name
+      self._writer.write_push('pointer', 0)
+      argument_count += 1
+
+    # Compile each parameter.
+    for obj in expression_list:
+      if type(obj) == Expression:
+        self._generate_for_expression(obj)
+        argument_count += 1
 
     method = '.'.join(identifier.value for identifier in identifiers)
-    self._writer.write_subroutine_call(method, arguments)
+    self._writer.write_subroutine_call(method, argument_count)
 
 
   def _generate_for_array_access(self, term: Term) -> None:
