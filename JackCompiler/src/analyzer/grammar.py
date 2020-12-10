@@ -133,13 +133,7 @@ class AClass(GrammarObject):
 class letStatement(GrammarObject):
   def __init__(self) -> None:
     keywords = [
-      Token('let', 'keyword'), Identifier,
-      {'optional': [
-        Token('[', 'symbol'),
-        Expression,
-        Token(']', 'symbol')
-      ]},
-      Token('=', 'symbol'), Expression, Token(';', 'symbol')
+      Token('let', 'keyword'), Term, Token('=', 'symbol'), Expression, Token(';', 'symbol')
     ]
     super().__init__('letStatement', keywords)
 

@@ -147,16 +147,8 @@ class Parser():
     statement = letStatement()
     token = self._next_token()
     statement.deposit(token)                    # let
-    identifier = self._compile_identifier()
-    statement.deposit(identifier)               # identifier
-
-    group = {'optional': []}
-    if self._peek_token().value == '[':
-      l = []
-      self._compile_bracket_expression_to_ref(l)
-      group['optional'] = l
-
-    statement.deposit(group)                    # ([expression])?
+    term = self._compile_term()
+    statement.deposit(term)                     # term
     token = self._next_token()
     statement.deposit(token)                    # =
     expression = self._compile_expression()
