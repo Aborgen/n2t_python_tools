@@ -174,17 +174,21 @@ class CodeGenerator():
     self._writer.write_pop('temp', 0)
 
 
-  # let var = expression;  :: First generate for expression on RHS. Then, pop to var.
+  # let term = expression;  :: First generate for expression on RHS. Then, pop to var.
   # TODO: Extend for array access.
   def _generate_for_let(self, statement: letStatement) -> None:
     '''
     [compile expression]
     pop this n
     '''
-    _, var, _, expression, _ = statement
+    _, term, _, expression, _ = statement
+    if len(term) == 4:
+      self._generate_for_array_assignment(term, expression)
+      return
+
     self._generate_for_expression(expression)
-    symbol = self._fetch_symbol(var)
-    self._writer.write_pop(symbol.kind, symbol.id)
+    symbol = self._fetch_symbol(term[0])
+    self._pop_symbol(symbol)
 
 
   def _generate_for_if(self, statement: ifStatement) -> None:
@@ -304,10 +308,15 @@ class CodeGenerator():
       operator, term1 = term
       self._generate_for_term(term1)
       self._writer.write_logic(operator.value)
-    # Term operator Term
+    # (Expression)
     elif len(term) == 3:
       _, expression, _ = term
       self._generate_for_expression(expression)
+    # Identifier[Expression]
+    elif len(term) == 4:
+      self._generate_for_array_access(term)
+      self._writer.write_pop('pointer', 1)
+      self._writer.write_push('that', 0)
     else:
       raise Exception('Encountered empty Term GrammarObject')
 
@@ -344,15 +353,46 @@ class CodeGenerator():
     # Method of instantiated class
     elif self._symbol_exists(identifiers[0]):
       symbol = self._fetch_symbol(identifiers[0])
-      self._writer.write_push(symbol.kind, symbol.id)
+      self._push_symbol(symbol)
       identifiers[0].value = symbol.type
       arguments += 1
     # Function / constructor / Static(?)
     else:
       pass
 
-    method = '.'.join(identifier.value for identifier in identifiers
+    method = '.'.join(identifier.value for identifier in identifiers)
     self._writer.write_subroutine_call(method, arguments)
+
+
+  def _generate_for_array_access(self, term: Term) -> None:
+    '''
+    push arr
+    [compile expression]
+    add
+    pop temp 0
+    '''
+    arr, _, expression, _ = term
+    self._generate_for_expression(expression)
+    symbol = self._fetch_symbol(arr)
+    self._push_symbol(symbol)
+    self._writer.write_arithmetic('+')
+
+
+  def _generate_for_array_assignment(self, term: Term, expression: Expression) -> None:
+    '''
+    [compile array access]
+    [compile expression]
+    pop temp 0
+    pop pointer 1 # Set address of arr[i] to THAT (heap)
+    push temp 0
+    pop that 0
+    '''
+    self._generate_for_array_access(term)
+    self._generate_for_expression(expression)
+    self._writer.write_pop('temp', 0)
+    self._writer.write_pop('pointer', 1)
+    self._writer.write_push('temp', 0)
+    self._writer.write_pop('that', 0)
 
 
   def _populate_class_symbols(self) -> None:
