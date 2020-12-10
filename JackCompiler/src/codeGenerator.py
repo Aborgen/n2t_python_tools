@@ -395,6 +395,14 @@ class CodeGenerator():
     return var_count
 
 
+  def _push_symbol(self, symbol: Symbol) -> None:
+    self._writer.write_push(symbol.kind, symbol.id)
+
+
+  def _pop_symbol(self, symbol: Symbol) -> None:
+    self._writer.write_pop(symbol.kind, symbol.id)
+
+
   def _symbol_exists(self, identifier: Identifier) -> bool:
     if type(identifier) != Identifier:
       raise Exception(f'Must pass identifier. Received \'{type(identifier)}\'')
