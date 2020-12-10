@@ -286,13 +286,20 @@ class CodeGenerator():
     if len(term) == 1:
       obj = term[0]
       if type(obj) == Token:
-        if obj.value == 'this':
-          self._writer.write_push('pointer', 0)
+        if obj.token_type == 'stringConstant':
+          self._generate_for_string(obj.value)
           return
-        elif obj.value in ['true', 'false', 'null']:
-          n = '0'
-        else:
+        elif obj.token_type == 'keyword':
+          if obj.value == 'this':
+            self._writer.write_push('pointer', 0)
+            return
+          elif obj.value in ['true', 'false', 'null']:
+            n = '0'
+        elif obj.token_type == 'integerConstant':
           n = obj.value
+        else:
+#          raise CompilerException('Unsupported Term')
+          raise Exception('Unsupported Term')
 
         self._writer.write_push('constant', n)
         # -1 == true according to specification
@@ -300,7 +307,7 @@ class CodeGenerator():
           self._writer.write_logic('~')
       elif type(obj) == Identifier:
         symbol = self._fetch_symbol(obj)
-        self._writer.write_push(symbol.kind, symbol.id)
+        self._push_symbol(symbol)
       elif type(obj) == SubroutineCall:
         self._generate_for_subroutine_call(obj)
     # operator Term
@@ -393,6 +400,25 @@ class CodeGenerator():
     self._writer.write_pop('pointer', 1)
     self._writer.write_push('temp', 0)
     self._writer.write_pop('that', 0)
+
+
+  def _generate_for_string(self, s: str) -> None:
+    '''
+    push constant [length s]
+    call String.new 1
+    [[
+      push constant [ordinal char]
+      call String.appendChar 2 # appendChar takes string object as first argument
+      for char in s
+    ]]
+    '''
+    length = len(s)
+    self._writer.write_push('constant', length)
+    self._writer.write_subroutine_call('String.new', 1)
+    for char in s:
+      ordinal = ord(char)
+      self._writer.write_push('constant', ordinal)
+      self._writer.write_subroutine_call('String.appendChar', 2)
 
 
   def _populate_class_symbols(self) -> None:
