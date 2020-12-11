@@ -1,0 +1,18 @@
+class Memory {
+  static Array ram;
+
+  function void init() {
+    // Sets base address of ram to be address 0, allowing full access to the system's RAM.
+    let ram = 0;
+    return;
+  }
+
+  function int peek(int address) {
+    return ram[address];
+  }
+
+  function void poke(int address, int value) {
+    let ram[address] = value;
+    return;
+  }
+}
