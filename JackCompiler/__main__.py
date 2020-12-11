@@ -14,7 +14,7 @@ if __name__ == '__main__':
   else:
     sources = [source]
 
-  root_dir = Path(source.stem)
+  root_dir = Path(f'{source.stem}_out')
   if root_dir.is_dir():
     for item in root_dir.iterdir():
       item.unlink()
