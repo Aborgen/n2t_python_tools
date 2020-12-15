@@ -1,0 +1,49 @@
+class Math {
+  static Array bitMask;
+
+  function void init() {
+    var int n, i, singleBit;
+    let n = 16;
+    let i = 0;
+    let singleBit = 1;
+    let bitMask = Array.new(n);
+    while (i < n) {
+      let bitMask[i] = singleBit;
+      let singleBit = singleBit + singleBit;
+      let i = i + 1;
+    }
+
+    return;
+  }
+
+  function int multiply(int x, int y) {
+    var int i, sum;
+    if ((x = 0) | (y = 0)) {
+      return 0;
+    }
+
+    let sum = 0;
+    let i = 0;
+    while (i < 16) {
+      if (Math.bitAt(y, i)) {
+        let sum = sum + x;
+      }
+
+      let x = x + x;
+      let i = i + 1;
+    }
+
+    return sum;
+  }
+
+  function boolean bitAt(int n, int i) {
+    var int singleBit;
+    let singleBit = n & bitMask[i];
+    if ((singleBit | 0) = 0) {
+      return false;
+    }
+    else {
+      return true;
+    }
+  }
+}
