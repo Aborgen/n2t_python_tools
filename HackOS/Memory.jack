@@ -1,9 +1,21 @@
 class Memory {
+  static int HEAPADDRESS, HEAPSIZE;
   static Array ram;
+  static Array heapFree;
 
   function void init() {
     // Sets base address of ram to be address 0, allowing full access to the system's RAM.
     let ram = 0;
+    let HEAPADDRESS = 2048;
+    let HEAPSIZE = 14334;
+    do Memory.initHeap();
+    return;
+  }
+
+  function void initHeap() {
+    let heapFree = HEAPADDRESS;
+    let heapFree[0] = null;
+    let heapFree[1] = HEAPSIZE;
     return;
   }
 
@@ -14,5 +26,46 @@ class Memory {
   function void poke(int address, int value) {
     let ram[address] = value;
     return;
+  }
+
+  function int alloc(int size) {
+    var int baseAddress;
+    let size = size + 2;
+    let baseAddress = Memory.findBestBlock(size);
+    return baseAddress;
+  }
+
+  function void deAlloc(Array obj) {
+    var Array block;
+    let block = heapFree;
+    while (~(block[0] = null)) {
+      let block = block[0];
+    }
+
+    let block[0] = obj;
+    return;
+  }
+
+  function int findBestBlock(int size) {
+    var Array block, bestFit;
+    let block = heapFree;
+    let bestFit = heapFree;
+    while (~(block[0] = null)) {
+      if ((block[1] > size) | (block[1] = size)) {
+        if (block[1] < bestFit[1]) {
+          let bestFit = block;
+        }
+      }
+
+      let block = block[0];
+    }
+
+    if (bestFit[1] < size) {
+      return null;
+    }
+
+    let bestFit[0] = null;
+    let bestFit[1] = bestFit[1] - size;
+    return bestFit[2] + bestFit[1];
   }
 }
