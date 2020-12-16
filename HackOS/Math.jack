@@ -36,6 +36,33 @@ class Math {
     return sum;
   }
 
+  function int divide(int x, int y) {
+    var int numerator, denominator, sign, quotient, quotient2;
+    let sign = 1;
+    if (x < 0) {
+      let sign = -sign;
+    }
+
+    if (y < 0) {
+      let sign = -sign;
+    }
+
+    let numerator = Math.abs(x);
+    let denominator = Math.abs(y);
+    if ((denominator > numerator) | (denominator < 0)) {
+      return 0;
+    }
+
+    let quotient = Math.divide(numerator, (denominator + denominator));
+    let quotient2 = quotient + quotient;
+    if ((numerator - (quotient2 * denominator)) < denominator) {
+      return quotient2 * sign;
+    }
+    else {
+      return quotient2 + 1 * sign;
+    }
+  }
+
   function int abs(int n) {
     var int absN;
     if (n < 0) {
