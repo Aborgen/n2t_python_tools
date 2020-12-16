@@ -36,6 +36,18 @@ class Math {
     return sum;
   }
 
+  function int abs(int n) {
+    var int absN;
+    if (n < 0) {
+      let absN = -n;
+    }
+    else {
+      let absN = n;
+    }
+
+    return absN;
+  }
+
   function boolean bitAt(int n, int i) {
     var int singleBit;
     let singleBit = n & bitMask[i];
