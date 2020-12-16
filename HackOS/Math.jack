@@ -113,6 +113,10 @@ class Math {
     return result;
   }
 
+  function int pow2(int n) {
+    return Math.pow(2, n);
+  }
+
   function int min(int x, int y) {
     var int result;
     if ((x < y)) {
