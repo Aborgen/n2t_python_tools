@@ -113,6 +113,30 @@ class Math {
     return result;
   }
 
+  function int min(int x, int y) {
+    var int result;
+    if ((x < y)) {
+      let result = x;
+    }
+    else {
+      let result = y;
+    }
+
+    return result;
+  }
+
+  function int max(int x, int y) {
+    var int result;
+    if ((x > y)) {
+      let result = x;
+    }
+    else {
+      let result = y;
+    }
+
+    return result;
+  }
+
   function boolean bitAt(int n, int i) {
     var int singleBit;
     let singleBit = n & bitMask[i];
