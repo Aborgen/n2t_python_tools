@@ -75,6 +75,27 @@ class Math {
     return absN;
   }
 
+  function int pow(int x, int n) {
+    var int result, absN, xCopy;
+    if (n < 0) {
+      return 0;
+    }
+
+    let result = 1;
+    let absN = Math.abs(n);
+    let xCopy = x;
+    while (absN > 0) {
+      if((absN & 1) = 1) {
+        let result = result * xCopy;
+      }
+
+      let absN = absN / 2;
+      let xCopy = xCopy * xCopy;
+    }
+
+    return result;
+  }
+
   function boolean bitAt(int n, int i) {
     var int singleBit;
     let singleBit = n & bitMask[i];
