@@ -76,20 +76,20 @@ class Math {
   }
 
   function int sqrt(int n) {
-    var int left, right, middle;
-    let left = 0;
-    let right = n + 1;
-    while (left < right) {
-      let middle = ((right - left) / 2) + left;
-      if (middle * middle > n) {
-        let right = middle;
+    var int y, j, middle, middle2;
+    let y = 0;
+    let j = 7; // n / 2 - 1, where n = number of bits in int (16)
+    while (j > -1) {
+      let middle = y + Math.pow2(j);
+      let middle2 = middle * middle;
+      if ((middle2 > 0) & ((middle2 < n) | (middle2 = n))) {
+        let y = middle;
       }
-      else {
-        let left = middle + 1;
-      }
+
+      let j = j - 1;
     }
 
-    return left - 1;
+    return y;
   }
 
   function int pow(int x, int n) {
