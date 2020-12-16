@@ -75,6 +75,23 @@ class Math {
     return absN;
   }
 
+  function int sqrt(int n) {
+    var int left, right, middle;
+    let left = 0;
+    let right = n + 1;
+    while (left < right) {
+      let middle = ((right - left) / 2) + left;
+      if (middle * middle > n) {
+        let right = middle;
+      }
+      else {
+        let left = middle + 1;
+      }
+    }
+
+    return left - 1;
+  }
+
   function int pow(int x, int n) {
     var int result, absN, xCopy;
     if (n < 0) {
