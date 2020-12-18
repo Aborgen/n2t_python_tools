@@ -37,29 +37,29 @@ class Math {
   }
 
   function int divide(int x, int y) {
-    var int numerator, denominator, sign, quotient, quotient2;
-    let sign = 1;
-    if (x < 0) {
-      let sign = -sign;
+    var int quotient;
+    let quotient = Math._recur_divide(Math.abs(x), Math.abs(y));
+    if ((x < 0) = (y < 0)) {
+      return quotient;
     }
-
-    if (y < 0) {
-      let sign = -sign;
+    else {
+      return -quotient;
     }
+  }
 
-    let numerator = Math.abs(x);
-    let denominator = Math.abs(y);
+  function int _recur_divide(int numerator, int denominator) {
+    var int quotient;
     if ((denominator > numerator) | (denominator < 0)) {
       return 0;
     }
 
-    let quotient = Math.divide(numerator, (denominator + denominator));
-    let quotient2 = quotient + quotient;
-    if ((numerator - (quotient2 * denominator)) < denominator) {
-      return quotient2 * sign;
+    let quotient = Math._recur_divide(numerator, (denominator + denominator));
+    let quotient = quotient + quotient;
+    if ((numerator - (quotient * denominator)) < denominator) {
+      return quotient;
     }
     else {
-      return quotient2 + 1 * sign;
+      return quotient + 1;
     }
   }
 
