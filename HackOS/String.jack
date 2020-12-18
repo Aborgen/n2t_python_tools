@@ -1,0 +1,207 @@
+class String {
+  static int MIN_ASCII_INT;
+  static int MAX_ASCII_INT;
+  static char MINUS_CHAR;
+  static char DOUBLE_QUOTE_CHAR;
+  static char NEWLINE_CHAR;
+  static char BACKSPACE_CHAR;
+
+  field Array charArray;
+  field int _length, _maxLength;
+
+  constructor String new(int size) {
+    let MIN_ASCII_INT = 48; // 0
+    let MAX_ASCII_INT = 57; // 9
+    let MINUS_CHAR = 45;
+    let DOUBLE_QUOTE_CHAR = 34;
+    let NEWLINE_CHAR = 128;
+    let BACKSPACE_CHAR = 129;
+
+    let _length = 0;
+    let _maxLength = size;
+    if (size > 0) {
+      let charArray = Array.new(size);
+    }
+    else {
+      let charArray = Array.new(1);
+    }
+
+    return this;
+  }
+
+  method int length() {
+    return _length;
+  }
+
+  method int capacity() {
+    return _maxLength;
+  }
+
+  method Array getData() {
+    return charArray;
+  }
+
+  method char charAt(int i) {
+    if (i > (_length - 1) | (i < 0)) {
+      return null;
+    }
+
+    return charArray[i];
+  }
+
+  method void setCharAt(int i, char c) {
+    if (i > (_length - 1) | (i < 0)) {
+      return;
+    }
+
+    let charArray[i] = c;
+    return;
+  }
+
+  method String appendChar(int c) {
+    if (_length = _maxLength) {
+      return null;
+    }
+
+    let charArray[_length] = c;
+    let _length = _length + 1;
+    return this;
+  }
+
+  method void eraseLastChar() {
+    if (_length = 0) {
+      return;
+    }
+
+    let _length = _length - 1;
+    return;
+  }
+
+  method int intValue() {
+    var String s;
+    var int number_count, i;
+    let i = 0;
+    while ((i < _length) & ((charArray[i] = MINUS_CHAR) | ~((charArray[i] < MIN_ASCII_INT) | (charArray[i] > MAX_ASCII_INT)))) {
+      let i = i + 1;
+    }
+
+    let number_count = i;
+    let s = String.new(number_count);
+    let i = 0;
+    while (i < number_count) {
+      do s.appendChar(charArray[i]);
+      let i = i + 1;
+    }
+
+    return String.atoi(s);
+  }
+
+  method void setInt(int n) {
+    var int i, length;
+    var String newString;
+    do charArray.dispose();
+
+    let newString = String.itoa(n);
+    let length = newString.length();
+    let charArray = Array.new(length);
+    let i = 0;
+    while (i < length) {
+      let charArray[i] = newString.charAt(i);
+      let i = i + 1;
+    }
+
+    let _length = length;
+    let _maxLength = length;
+    do newString.dispose();
+    return;
+  }
+
+  method void dispose() {
+    do charArray.dispose();
+    do Memory.deAlloc(this);
+    return;
+  }
+
+  function int atoi(String s) {
+    var int number, i, length;
+    var int digit;
+    let number = 0;
+    let i = 0;
+    let length = s.length();
+    if (s.charAt(0) = MINUS_CHAR) {
+      let i = i + 1;
+    }
+
+    while (i < length) {
+      let digit = s.charAt(i);
+      if ((digit < MIN_ASCII_INT) | (digit > MAX_ASCII_INT)) {
+        return null;
+      }
+
+      let digit = (digit - MIN_ASCII_INT);
+      let number = (number * 10) + digit;
+      let i = i + 1;
+    }
+
+    if (s.charAt(0) = MINUS_CHAR) {
+      let number = -number;
+    }
+
+    return number;
+  }
+
+  function String itoa(int n) {
+    var String s;
+    var int absN;
+    var boolean isNegative, inDangerZone;
+    if (n < 0) {
+      let isNegative = true;
+    }
+    else {
+      let isNegative = false;
+    }
+
+    let absN = Math.abs(n);
+    let s = String._recur_itoa(absN, 1, isNegative);
+    return s;
+  }
+
+  function String _recur_itoa(int n, int size, boolean isNegative) {
+    var int quotient;
+    var String s;
+    var int c;
+    if (n < 10) {
+      if (isNegative) {
+        let s = String.new(size + 1);
+        do s.appendChar(MINUS_CHAR);
+      }
+      else {
+        let s = String.new(size);
+      }
+
+      let c = MIN_ASCII_INT + n;
+      do s.appendChar(c);
+//      do Output.printInt(c - MIN_ASCII_INT);
+      return s;
+    }
+    else {
+      let c = MIN_ASCII_INT + Math.modPositive(n, 10);
+      let s = String._recur_itoa(n / 10, size + 1, isNegative);
+      let s = s.appendChar(c);
+//      do Output.printInt(c - MIN_ASCII_INT);
+      return s;
+    }
+  }
+
+  function char backSpace() {
+    return BACKSPACE_CHAR;
+  }
+
+  function char doubleQuote() {
+    return DOUBLE_QUOTE_CHAR;
+  }
+
+  function char newLine() {
+    return NEWLINE_CHAR;
+  }
+}
