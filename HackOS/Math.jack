@@ -155,7 +155,7 @@ class Math {
   function boolean bitAt(int n, int i) {
     var int singleBit;
     let singleBit = n & bitMask[i];
-    if ((singleBit | 0) = 0) {
+    if (singleBit = 0) {
       return false;
     }
     else {
