@@ -141,6 +141,17 @@ class Math {
     return result;
   }
 
+  function int modPositive(int a, int b) {
+    var int quotient, remainder;
+    if ((a < 0) | (b < 0)) {
+      return -1;
+    }
+
+    let quotient = a / b;
+    let remainder = a - (b * quotient);
+    return remainder;
+  }
+
   function boolean bitAt(int n, int i) {
     var int singleBit;
     let singleBit = n & bitMask[i];
