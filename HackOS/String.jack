@@ -181,14 +181,12 @@ class String {
 
       let c = MIN_ASCII_INT + n;
       do s.appendChar(c);
-//      do Output.printInt(c - MIN_ASCII_INT);
       return s;
     }
     else {
       let c = MIN_ASCII_INT + Math.modPositive(n, 10);
       let s = String._recur_itoa(n / 10, size + 1, isNegative);
       let s = s.appendChar(c);
-//      do Output.printInt(c - MIN_ASCII_INT);
       return s;
     }
   }
