@@ -1,4 +1,4 @@
-**---Requires at least python 3.7.5---**
+**---Requires at least python 3.8---**
 
 This repository contains a collection of tools written during the course [nand2tetris](https://www.nand2tetris.org/course). In the first half of the course, the student is asked to build a (virtual) computer starting only with a NAND logic gate. The second half involves the software layer, which is what this repository is for.
 
