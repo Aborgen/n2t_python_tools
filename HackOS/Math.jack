@@ -16,6 +16,10 @@ class Math {
     return;
   }
 
+  function Array power2Array() {
+    return bitMask;
+  }
+
   function int multiply(int x, int y) {
     var int i, sum;
     if ((x = 0) | (y = 0)) {
