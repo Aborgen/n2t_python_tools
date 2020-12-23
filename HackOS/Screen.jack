@@ -92,29 +92,37 @@ class Screen {
   }
 
   function void drawHorizontalLine(int y, int x1, int x2) {
-    var int temp, dx, xMod16, xDiv16, wordCount, addressBase;
+    var int temp, currentWord, currentBit, addressBase;
     if (x1 > x2) {
       let temp = x2;
       let x2 = x1;
       let x1 = temp;
     }
 
+    let currentWord = x1 / 16;
+    let currentBit = Math.modPositive(x1, 16);
     let addressBase = (y * 32) + SCREEN_START;
+    do Screen._horizontalLineLoop(y, x1, x2, currentWord, currentBit, addressBase);
+    return;
+  }
+
+  function void _horizontalLineLoop(int y, int x1, int x2, int currentWord, int currentBit, int addressBase) {
     while ((x1 < x2) | (x1 = x2)) {
-      let xDiv16 = x1 / 16;
       // If we are targeting the first bit of a word, then set the whole word to 16 (1|0)s as long as the entire word is a part of the line.
       // NOTE: true = -1, false = 0 in the Jack language.
-      if ((xMod16 = 0) & ((x2 - x1) > 15)) {
-        do Memory.poke(addressBase + xDiv16, COLOR);
+      if ((currentBit = 0) & ((x2 - x1) > 15)) {
+        do Memory.poke(addressBase + currentWord, COLOR);
         let x1 = x1 + 16;
+        let currentWord = currentWord + 1;
       }
       else {
-        do Screen.setBitsAtAddress(addressBase + xDiv16, bitMask[xMod16]);
-        if (xMod16 = 15) {
-          let xMod16 = 0;
+        do Screen.setBitsAtAddress(addressBase + currentWord, bitMask[currentBit]);
+        if (currentBit = 15) {
+          let currentBit = 0;
+          let currentWord = currentWord + 1;
         }
         else {
-          let xMod16 = xMod16 + 1;
+          let currentBit = currentBit + 1;
         }
 
         let x1 = x1 + 1;
@@ -125,7 +133,7 @@ class Screen {
   }
 
   function void drawRectangle(int x1, int y1, int x2, int y2) {
-    var int temp, dx, dy, n;
+    var int temp, currentWord, currentBit, addressBase, length;
     if (x1 > x2) {
       let temp = x1;
       let x1 = x2;
@@ -138,31 +146,14 @@ class Screen {
       let y2 = temp;
     }
 
-    let dx = x2 - x1;
-    let dy = y2 - y1;
-    if (dx > dy) {
-      do Screen.drawHorizontalRectangle(y1, x1, x2, dy);
-    }
-    else {
-      do Screen.drawVerticalRectangle(x1, y1, y2, dx);
-    }
-
-    return;
-  }
-
-  function void drawVerticalRectangle(int x, int y1, int y2, int width) {
-    while ((x < width) | (x = width)) {
-      do Screen.drawVerticalLine(x, y1, y2);
-      let x = x + 1;
-    }
-
-    return;
-  }
-
-  function void drawHorizontalRectangle(int y, int x1, int x2, int length) {
-    while ((y < length) | (y = length)) {
-      do Screen.drawHorizontalLine(y, x1, x2);
-      let y = y + 1;
+    let currentWord = x1 / 16;
+    let currentBit = Math.modPositive(x1, 16);
+    let addressBase = (y1 * 32) + SCREEN_START;
+    let length = y2 - y1;
+    while ((y1 < length) | (y1 = length)) {
+      do Screen._horizontalLineLoop(y1, x1, x2, currentWord, currentBit, addressBase);
+      let y1 = y1 + 1;
+      let addressBase = addressBase + 32;
     }
 
     return;
