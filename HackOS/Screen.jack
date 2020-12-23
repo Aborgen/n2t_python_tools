@@ -1,10 +1,10 @@
 class Screen {
-  static int SCREEN_ADDRESS;
+  static int SCREEN_START;
   static Array bitMask;
   static boolean COLOR;
   
   function void init() {
-    let SCREEN_ADDRESS = 16384;
+    let SCREEN_START = 16384;
     let COLOR = true; // true = black, false = white
     let bitMask = Math.power2Array();
     return;
@@ -17,7 +17,7 @@ class Screen {
 
   function void drawPixel(int x, int y) {
     var int address, x16thBit, value;
-    let address = (x / 16) + (y * 32) + SCREEN_ADDRESS;
+    let address = (x / 16) + (y * 32) + SCREEN_START;
     let x16thBit = bitMask[Math.modPositive(x, 16)];
     do Screen.setBitsAtAddress(address, x16thBit);
     return;
@@ -74,7 +74,7 @@ class Screen {
     }
 
     let x16thBit = bitMask[Math.modPositive(x, 16)];
-    let address = (x / 16) + (y1 * 32) + SCREEN_ADDRESS;
+    let address = (x / 16) + (y1 * 32) + SCREEN_START;
     while ((y1 < y2) | (y1 = y2)) {
       do Screen.setBitsAtAddress(address, x16thBit);
       let address = address + 32;
@@ -92,8 +92,7 @@ class Screen {
       let x1 = temp;
     }
 
-    let xMod16 = Math.modPositive(x1, 16);
-    let addressBase = (y * 32) + SCREEN_ADDRESS;
+    let addressBase = (y * 32) + SCREEN_START;
     while ((x1 < x2) | (x1 = x2)) {
       let xDiv16 = x1 / 16;
       // If we are targeting the first bit of a word, then set the whole word to 16 (1|0)s as long as the entire word is a part of the line.
