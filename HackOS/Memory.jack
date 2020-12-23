@@ -46,6 +46,20 @@ class Memory {
     return;
   }
 
+  function void clearRAMRange(int start, int end) {
+    do Memory.setRAMRange(start, end, 0);
+    return;
+  }
+
+  function void setRAMRange(int start, int end, int value) {
+    while ((start < end) | (start = end)) {
+      let ram[start] = value;
+      let start = start + 1;
+    }
+
+    return;
+  }
+
   function int findBestBlock(int size) {
     var Array block, bestFit;
     let block = heapFree;
