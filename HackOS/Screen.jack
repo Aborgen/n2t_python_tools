@@ -167,8 +167,8 @@ class Screen {
     let dy2 = dy * dy;
     while ((dy < r) | (dy = r)) {
       let length = Math.sqrt(r2 - dy2);
-      do Screen.drawLine(x - length, y + dy, x + length, y + dy);
-      do Screen.drawLine(x - length, y + r, x + length, y + r);
+      do Screen.drawHorizontalLine(y + dy, x - length, x + length);
+      do Screen.drawHorizontalLine(y + r, x - length, x + length);
       let dy = dy + 1;
       let dy2 = dy2 + dy + (dy + 1);
       let r = r - 1;
