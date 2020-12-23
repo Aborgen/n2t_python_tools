@@ -1,10 +1,12 @@
 class Screen {
   static int SCREEN_START;
+  static int SCREEN_END;
   static Array bitMask;
   static boolean COLOR;
   
   function void init() {
     let SCREEN_START = 16384;
+    let SCREEN_END = 24575;
     let COLOR = true; // true = black, false = white
     let bitMask = Math.power2Array();
     return;
@@ -12,6 +14,11 @@ class Screen {
 
   function void setColor(boolean color) {
     let COLOR = color;
+    return;
+  }
+
+  function void clearScreen() {
+    do Memory.clearRAMRange(SCREEN_START, SCREEN_END);
     return;
   }
 
