@@ -19,7 +19,7 @@ class Screen {
     var int address, x16thBit, value;
     let address = (x / 16) + (y * 32) + SCREEN_ADDRESS;
     let x16thBit = bitMask[Math.modPositive(x, 16)];
-    do Screen.setBitAtAddress(address, x16thBit);
+    do Screen.setBitsAtAddress(address, x16thBit);
     return;
   }
 
@@ -76,7 +76,7 @@ class Screen {
     let x16thBit = bitMask[Math.modPositive(x, 16)];
     let address = (x / 16) + (y1 * 32) + SCREEN_ADDRESS;
     while ((y1 < y2) | (y1 = y2)) {
-      do Screen.setBitAtAddress(address, x16thBit);
+      do Screen.setBitsAtAddress(address, x16thBit);
       let address = address + 32;
       let y1 = y1 + 1;
     }
@@ -85,7 +85,7 @@ class Screen {
   }
 
   function void drawHorizontalLine(int y, int x1, int x2) {
-    var int temp, xMod16, xDiv16, address;
+    var int temp, dx, xMod16, xDiv16, wordCount, addressBase;
     if (x1 > x2) {
       let temp = x2;
       let x2 = x1;
@@ -93,18 +93,26 @@ class Screen {
     }
 
     let xMod16 = Math.modPositive(x1, 16);
-    let address = (y * 32) + SCREEN_ADDRESS;
+    let addressBase = (y * 32) + SCREEN_ADDRESS;
     while ((x1 < x2) | (x1 = x2)) {
       let xDiv16 = x1 / 16;
-      do Screen.setBitAtAddress(address + xDiv16, bitMask[xMod16]);
-      if (xMod16 = 15) {
-        let xMod16 = 0;
+      // If we are targeting the first bit of a word, then set the whole word to 16 (1|0)s as long as the entire word is a part of the line.
+      // NOTE: true = -1, false = 0 in the Jack language.
+      if ((xMod16 = 0) & ((x2 - x1) > 15)) {
+        do Memory.poke(addressBase + xDiv16, COLOR);
+        let x1 = x1 + 16;
       }
       else {
-        let xMod16 = xMod16 + 1;
-      }
+        do Screen.setBitsAtAddress(addressBase + xDiv16, bitMask[xMod16]);
+        if (xMod16 = 15) {
+          let xMod16 = 0;
+        }
+        else {
+          let xMod16 = xMod16 + 1;
+        }
 
-      let x1 = x1 + 1;
+        let x1 = x1 + 1;
+      }
     }
 
     return;
@@ -172,10 +180,17 @@ class Screen {
     return;
   }
 
-  function void setBitAtAddress(int address, int bit) {
+  function void setBitsAtAddress(int address, int bit) {
     var int value;
     let value = Memory.peek(address);
-    let value = value | bit;
+    // When COLOR = false, then the color painted must be white, which means no bit set at that particular pixel.
+    if (~COLOR) {
+      let value = value & ~bit;
+    }
+    else {
+      let value = value | bit;
+    }
+
     do Memory.poke(address, value);
     return;
   }
