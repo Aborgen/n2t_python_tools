@@ -1,0 +1,55 @@
+class Sys {
+  function void init() {
+    do Memory.init();
+    do Math.init();
+    do Screen.init();
+    do Keyboard.init();
+    do Output.init();
+    do Main.main();
+    do Sys.halt();
+    return;
+  }
+
+  function void halt() {
+    while (true) {
+    }
+
+    return;
+  }
+
+  function void wait(int ms) {
+    var int length;
+    let length = 9000 + ms + 1;
+    while (length > 0) {
+      do Math.sqrt(36);
+      do Math.sqrt(36);
+      do Math.sqrt(36);
+      do Math.sqrt(36);
+      do Math.sqrt(36);
+      do Math.sqrt(36);
+      do Math.sqrt(36);
+      do Math.sqrt(36);
+      do Math.sqrt(36);
+      do Math.sqrt(36);
+      do Math.sqrt(36);
+      do Math.sqrt(36);
+      let length = length - 1;
+    }
+
+    return;
+  }
+
+  function void error(int errorCode) {
+    var String s;
+    let s = String.new(6);
+    do s.appendChar(69); // E
+    do s.appendChar(82); // R
+    do s.appendChar(82); // R
+    do s.appendChar(60); // <
+    do s.appendChar(48 + errorCode);
+    do s.appendChar(62); // >
+    do Output.printString(s);
+    do Sys.halt();
+    return;
+  }
+}
