@@ -31,7 +31,7 @@ class Screen {
   }
 
   function void drawLine(int x1, int y1, int x2, int y2) {
-    var int diff, temp, a, b;
+    var int diff, temp, dx, dy, a, b;
     if (x1 = x2) {
       do Screen.drawVerticalLine(x1, y1, y2);
       return;
@@ -54,18 +54,20 @@ class Screen {
       let y2 = temp;
     }
 
-    let a = x1;
-    let b = y1;
-    let diff = (a * y2) - (b * x2);
-    while ( ((a < x2) | (a = x2) ) & ((b < y2) | (b = y2)) ) {
+    let dx = x2 - x1;
+    let dy = y2 - y1;
+    let a = 0;
+    let b = 0;
+    let diff = 0;
+    while ( ((a < dx) | (a = dx)) & ((b < dy) | (b = dy)) ) {
       do Screen.drawPixel(x1 + a, y1 + b);
       if (diff < 0) {
         let a = a + 1;
-        let diff = diff + y2;
+        let diff = diff + dy;
       }
       else {
         let b = b + 1;
-        let diff = diff - x2;
+        let diff = diff - dx;
       }
     }
 
