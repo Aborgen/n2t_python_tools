@@ -32,6 +32,7 @@ class Screen {
 
   function void drawLine(int x1, int y1, int x2, int y2) {
     var int diff, temp, dx, dy, a, b;
+    var boolean mirrored;
     if (x1 = x2) {
       do Screen.drawVerticalLine(x1, y1, y2);
       return;
@@ -46,21 +47,33 @@ class Screen {
       let temp = x1;
       let x1 = x2;
       let x2 = temp;
-    }
 
-    if (y1 > y2) {
       let temp = y1;
       let y1 = y2;
       let y2 = temp;
     }
 
+    if (y1 < y2) {
+      let mirrored = false;
+      let dy = y2 - y1;
+    }
+    else {
+      let mirrored = true;
+      let dy = y1 - y2;
+    }
+
     let dx = x2 - x1;
-    let dy = y2 - y1;
     let a = 0;
     let b = 0;
     let diff = 0;
     while ( ((a < dx) | (a = dx)) & ((b < dy) | (b = dy)) ) {
-      do Screen.drawPixel(x1 + a, y1 + b);
+      if (mirrored) {
+        do Screen.drawPixel(x1 + a, y1 - b);
+      }
+      else {
+        do Screen.drawPixel(x1 + a, y1 + b);
+      }
+
       if (diff < 0) {
         let a = a + 1;
         let diff = diff + dy;
