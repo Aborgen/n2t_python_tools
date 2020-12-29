@@ -29,6 +29,20 @@ class String {
     return this;
   }
 
+  constructor String copy(String s) {
+    var int i;
+    let _length = s.length();
+    let _maxLength = _length;
+    let charArray = Array.new(_length);
+    let i = 0;
+    while (i < _length) {
+      let charArray[i] = s.charAt(i);
+      let i = i + 1;
+    }
+
+    return this;
+  }
+
   method int length() {
     return _length;
   }
