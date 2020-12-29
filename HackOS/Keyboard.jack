@@ -1,0 +1,86 @@
+class Keyboard {
+  static int KEYBOARD_ADDRESS;
+  static String stringBuffer;
+
+  function void init() {
+    let KEYBOARD_ADDRESS = 24576;
+    do Keyboard._resetStringBuffer();
+    return;
+  }
+
+  function int keyPressed() {
+    return Memory.peek(KEYBOARD_ADDRESS);
+  }
+
+  function char readChar() {
+    var char c, pressed;
+    let pressed = 0;
+    do Output.printChar(95); // _
+    while (pressed = 0) {
+      let pressed = Keyboard.keyPressed();
+    }
+
+    let c = pressed;
+    while (~(pressed = 0)) {
+      let pressed = Keyboard.keyPressed();
+    }
+
+    do Output.backSpace();
+    if (c < 127) {
+      do Output.printChar(c);
+    }
+
+    if (c = String.newLine()) {
+      do Output.println();
+    }
+
+    if (c = String.backSpace()) {
+      do Output.backSpace();
+    }
+
+    if (c > 152) {
+      return Keyboard.readChar();
+    }
+
+    return c;
+  }
+
+  function String readLine(String message) {
+    var String s;
+    var char c;
+    var boolean inLoop;
+    let inLoop = true;
+    do Output.printString(message);
+    while (inLoop) {
+      let c = Keyboard.readChar();
+      if (c = String.newLine()) {
+        let inLoop = false;
+      }
+
+      if (c = String.backSpace()) {
+        do stringBuffer.eraseLastChar();
+      }
+      
+      if (c < 127) {
+        do stringBuffer.appendChar(c);
+      }
+    }
+
+    let s = String.copy(stringBuffer);
+    do Keyboard._resetStringBuffer();
+    return s;
+  }
+
+  function int readInt(String message) {
+    var String s;
+    var int n;
+    let s = Keyboard.readLine(message);
+    let n = s.intValue();
+    return n;
+  }
+
+  function void _resetStringBuffer() {
+    let stringBuffer = String.new(192);
+    return;
+  }
+}
