@@ -42,6 +42,18 @@ class Output {
     return;
   }
 
+  function void printString(String s) {
+    var int i, length;
+    let i = 0;
+    let length = s.length();
+    while (i < length) {
+      do Output.printChar(s.charAt(i));
+      let i = i + 1;
+    }
+
+    return;
+  }
+
   // http://nand2tetris-questions-and-answers-forum.32033.n3.nabble.com/Faster-Character-Drawing-td4031995.html
   function void putCharInPlace(char c) {
     var Array map;
