@@ -25,7 +25,7 @@ class Output {
   }
 
   function void moveCursor(int i, int j) {
-    if (((i < 0) | (j < 0)) | ((i > TEXT_WIDTH - CURSOR_WIDTH) | (j > TEXT_HEIGHT - CURSOR_HEIGHT))) {
+    if (((i < 0) | (j < 0)) | ((i > TEXT_HEIGHT) | (j > TEXT_WIDTH))) {
       do Sys.error(1);
     }
 
