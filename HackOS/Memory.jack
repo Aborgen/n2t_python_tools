@@ -79,26 +79,43 @@ class Memory {
     return;
   }
 
-  function int findBestBlock(int size) {
-    var Array block, bestFit;
-    let block = heapFree;
-    let bestFit = heapFree;
-    while (~(block[0] = null)) {
-      if ((block[1] > size) | (block[1] = size)) {
-        if (block[1] < bestFit[1]) {
-          let bestFit = block;
+  function int findBestBlock(int dataSize) {
+    var int fullSize;
+    var boolean stillSearching;
+    var Array block, bestBlock, returnBlock;
+    let stillSearching = true;
+    let fullSize = dataSize + 2;
+    let block = heap;
+    let bestBlock = null;
+    while (stillSearching) {
+      if (block[1] = fullSize) {
+        let bestBlock = block;
+        let stillSearching = false;
+      }
+      else {
+        if ((bestBlock = null)) {
+          let bestBlock = block;
+        }
+        else {if ((block[1] > fullSize) & (block[1] < bestBlock[1])) {
+          let bestBlock = block;
+        }}
+
+        if (block[0] = null) {
+          let stillSearching = false;
+        }
+        else {
+          let block = block[0];
         }
       }
-
-      let block = block[0];
     }
 
-    if (bestFit[1] < size) {
+    if (bestBlock = null) {
       return null;
     }
 
-    let bestFit[0] = null;
-    let bestFit[1] = bestFit[1] - size;
-    return bestFit[2] + bestFit[1];
+    let bestBlock[1] = bestBlock[1] - fullSize;
+    let returnBlock = bestBlock + bestBlock[1];
+    let returnBlock[1] = dataSize;
+    return returnBlock;
   }
 }
