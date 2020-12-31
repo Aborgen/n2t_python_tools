@@ -75,6 +75,22 @@ class Output {
     return;
   }
 
+  function void backSpace() {
+    if (column = 0) {
+      if (row = 0) {
+        return;
+      }
+
+      let column = TEXT_WIDTH - 1;
+      let row = row - 1;
+    }
+    else {
+      let column = column - 1;
+    }
+
+    return;
+  }
+
   // http://nand2tetris-questions-and-answers-forum.32033.n3.nabble.com/Faster-Character-Drawing-td4031995.html
   function void putCharInPlace(char c) {
     var Array map;
