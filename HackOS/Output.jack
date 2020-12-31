@@ -54,6 +54,14 @@ class Output {
     return;
   }
 
+  function void printInt(int n) {
+    var String s;
+    let s = String.new(0);
+    do s.setInt(n);
+    do Output.printString(s);
+    return;
+  }
+
   // http://nand2tetris-questions-and-answers-forum.32033.n3.nabble.com/Faster-Character-Drawing-td4031995.html
   function void putCharInPlace(char c) {
     var Array map;
