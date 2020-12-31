@@ -18,22 +18,15 @@ class Sys {
   }
 
   function void wait(int ms) {
-    var int length;
-    let length = 9000 + ms + 1;
-    while (length > 0) {
-      do Math.sqrt(36);
-      do Math.sqrt(36);
-      do Math.sqrt(36);
-      do Math.sqrt(36);
-      do Math.sqrt(36);
-      do Math.sqrt(36);
-      do Math.sqrt(36);
-      do Math.sqrt(36);
-      do Math.sqrt(36);
-      do Math.sqrt(36);
-      do Math.sqrt(36);
-      do Math.sqrt(36);
-      let length = length - 1;
+    var int lengthOut, lengthIn;
+    let lengthOut = ms;
+    while (lengthOut > 0) {
+      let lengthIn = 300;
+      while (lengthIn > 0) {
+        let lengthIn = lengthIn - 1;
+      }
+      
+      let lengthOut = lengthOut - 1;
     }
 
     return;
