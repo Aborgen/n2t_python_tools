@@ -1,15 +1,27 @@
 class Screen {
   static int SCREEN_START;
   static int SCREEN_END;
+  static int SCREEN_WIDTH;
+  static int SCREEN_HEIGHT;
   static Array bitMask;
   static boolean COLOR;
   
   function void init() {
     let SCREEN_START = 16384;
     let SCREEN_END = 24575;
+    let SCREEN_WIDTH = 512;
+    let SCREEN_HEIGHT = 256;
     let COLOR = true; // true = black, false = white
     let bitMask = Math.power2Array();
     return;
+  }
+
+  function int width() {
+    return SCREEN_WIDTH;
+  }
+
+  function int height() {
+    return SCREEN_HEIGHT;
   }
 
   function void setColor(boolean color) {
