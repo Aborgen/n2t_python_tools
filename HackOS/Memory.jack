@@ -1,21 +1,20 @@
 class Memory {
-  static int HEAPADDRESS, HEAPSIZE;
+  static int HEAPSIZE;
   static Array ram;
-  static Array heapFree;
+  static Array heap;
 
   function void init() {
     // Sets base address of ram to be address 0, allowing full access to the system's RAM.
     let ram = 0;
-    let HEAPADDRESS = 2048;
     let HEAPSIZE = 14334;
     do Memory.initHeap();
     return;
   }
 
   function void initHeap() {
-    let heapFree = HEAPADDRESS;
-    let heapFree[0] = null;
-    let heapFree[1] = HEAPSIZE;
+    let heap = 2048;
+    let heap[0] = null;
+    let heap[1] = HEAPSIZE;
     return;
   }
 
