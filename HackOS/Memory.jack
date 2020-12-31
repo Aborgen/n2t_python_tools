@@ -34,14 +34,34 @@ class Memory {
     return baseAddress;
   }
 
+  // http://nand2tetris-questions-and-answers-forum.32033.n3.nabble.com/New-Heap-Management-algorithm-Coursera-version-td4032026.html
+  // This way of deallocating makes it simple to defrag the heap.
   function void deAlloc(Array obj) {
-    var Array block;
-    let block = heapFree;
-    while (~(block[0] = null)) {
-      let block = block[0];
+    var Array givenBlock, currentBlock, nextBlock;
+    // obj is only comprised of the data part of the block, not the two headers that come before it.
+    let givenBlock = obj - 2;
+    let currentBlock = heap;
+    let nextBlock = currentBlock[0];
+    // Place givenBlock in the heap linked list, which is sorted by address.
+    while ((~(nextBlock = null)) & (nextBlock < givenBlock)) {
+      let currentBlock = nextBlock;
+      let nextBlock = currentBlock[0];
     }
 
-    let block[0] = obj;
+    let currentBlock[0] = givenBlock;
+    let givenBlock[0] = nextBlock;
+    // After, perform defragmentation, if possible.
+    // Combine givenBlock and nextBlock if they are next to each other in memory
+    if ((givenBlock + givenBlock[1] + 2) = nextBlock) {
+      let givenBlock[1] = givenBlock[1] + nextBlock[1] + 2;
+      let givenBlock[0] = nextBlock[0];
+    }
+    // Combine currentBlock and givenBlock if they are next to each other in memory
+    else {if ((currentBlock + currentBlock[1] + 2) = givenBlock) {
+      let currentBlock[1] = currentBlock[1] + givenBlock[1] + 2;
+      let currentBlock[0] = givenBlock[0];
+    }}
+
     return;
   }
 
