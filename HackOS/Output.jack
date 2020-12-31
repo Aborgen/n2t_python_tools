@@ -14,9 +14,9 @@ class Output {
     let SCREEN_RAM = 16384;
     let TEXT_HEIGHT = 23;
     let TEXT_WIDTH = 64;
-    let CURSOR_HEIGHT = 10;
+    let CURSOR_HEIGHT = 11;
     let CURSOR_WIDTH = 8;
-    // This value is used to determine which row a char begins at.
+    // This value is used to determine which word a char is found in.
     let ROW_MULTIPLIER = (Screen.width() / 16) * CURSOR_HEIGHT;
     let row = 0;
     let column = 0;
